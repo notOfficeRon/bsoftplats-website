@@ -1,0 +1,182 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 3%;
+    --foreground: 0 0% 95%;
+    --card: 0 0% 6%;
+    --card-foreground: 0 0% 95%;
+    --popover: 0 0% 6%;
+    --popover-foreground: 0 0% 95%;
+    --primary: 0 0% 95%;
+    --primary-foreground: 0 0% 8%;
+    --secondary: 0 0% 12%;
+    --secondary-foreground: 0 0% 95%;
+    --muted: 0 0% 10%;
+    --muted-foreground: 0 0% 64%;
+    --accent: 0 0% 14%;
+    --accent-foreground: 0 0% 95%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 0 0% 16%;
+    --input: 0 0% 16%;
+    --ring: 0 0% 85%;
+    --radius: 0.75rem;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+  }
+}
+
+.hero-content {
+  isolation: isolate;
+  transform: translateZ(0);
+}
+
+.hero-paths-layer {
+  transform-origin: 28% 52%;
+  animation: hero-paths-drift 36s ease-in-out infinite alternate;
+}
+
+.hero-path {
+  stroke-dasharray: 600 1400;
+  animation: hero-path-flow var(--path-duration, 22s) linear infinite;
+  animation-delay: var(--path-delay, 0s);
+}
+
+.partner-marquee {
+  display: flex;
+  overflow: hidden;
+  width: 100%;
+}
+
+.partner-marquee-track {
+  display: flex;
+  flex: none;
+  min-width: 100%;
+  justify-content: space-around;
+  animation: partner-marquee 22s linear infinite;
+}
+
+.partner-marquee-item {
+  flex: none;
+  padding: 0 1.25rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: #0a0a0a;
+}
+
+.hover-grain-glow {
+  background:
+    radial-gradient(
+      420px circle at var(--glow-x) var(--glow-y),
+      rgba(255, 255, 255, 0.18),
+      rgba(255, 255, 255, 0.07) 30%,
+      rgba(255, 255, 255, 0.02) 46%,
+      transparent 70%
+    );
+}
+
+.hover-grain-noise {
+  opacity: 0.5;
+  mix-blend-mode: screen;
+  background-image:
+    repeating-linear-gradient(
+      0deg,
+      rgba(255, 255, 255, 0.12) 0px,
+      rgba(255, 255, 255, 0.12) 1px,
+      transparent 1px,
+      transparent 3px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.08) 0px,
+      rgba(255, 255, 255, 0.08) 1px,
+      transparent 1px,
+      transparent 4px
+    );
+  filter: contrast(118%);
+}
+
+.floating-blob {
+  animation: floating-blob-drift 9.5s ease-in-out infinite alternate;
+}
+
+.floating-blob-delay {
+  animation-duration: 12s;
+  animation-delay: -3s;
+}
+
+@keyframes hero-path-flow {
+  from {
+    stroke-dashoffset: 0;
+  }
+  to {
+    stroke-dashoffset: -2000;
+  }
+}
+
+@keyframes hero-paths-drift {
+  from {
+    transform: scale(1.42) translate3d(0, 0, 0);
+  }
+  to {
+    transform: scale(1.48) translate3d(-0.8%, 0.5%, 0);
+  }
+}
+
+@keyframes partner-marquee {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-100%, 0, 0);
+  }
+}
+
+@keyframes floating-blob-drift {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    transform: translate3d(14px, -18px, 0) scale(1.08);
+  }
+}
+
+@keyframes story-progress {
+  from {
+    width: 0%;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-paths-layer,
+  .hero-path,
+  .partner-marquee-track,
+  .floating-blob,
+  .floating-blob-delay {
+    animation: none;
+  }
+
+  .hero-paths-layer {
+    transform: scale(1.42);
+  }
+}
