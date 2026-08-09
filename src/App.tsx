@@ -25,21 +25,6 @@ const WHAT_WE_DO_CARDS = [
   },
 ];
 
-const SERVICES = [
-  {
-    title: "Cloud & DevOps",
-    description: "Infrastructure, release engineering, monitoring, and security hardening.",
-  },
-  {
-    title: "Full-Stack Delivery",
-    description: "Backend + frontend teams that own planning, implementation, and release.",
-  },
-  {
-    title: "AI Integrations",
-    description: "Production-focused GenAI features integrated into real business workflows.",
-  },
-];
-
 const SUCCESS_STORIES = [
   {
     title: "Banking Platform Modernization",
