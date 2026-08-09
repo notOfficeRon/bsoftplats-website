@@ -122,6 +122,39 @@
   animation-delay: -3s;
 }
 
+.dev-blue-theme .bg-black {
+  background-color: #040b24 !important;
+}
+
+.dev-blue-theme .from-black {
+  --tw-gradient-from: rgb(4 11 36 / var(--tw-gradient-from-opacity, 1)) var(--tw-gradient-from-position) !important;
+  --tw-gradient-to: rgb(4 11 36 / 0) var(--tw-gradient-to-position) !important;
+}
+
+.dev-blue-theme .to-black {
+  --tw-gradient-to: rgb(4 11 36 / var(--tw-gradient-to-opacity, 1)) var(--tw-gradient-to-position) !important;
+}
+
+.dev-blue-theme .via-zinc-950 {
+  --tw-gradient-to: rgb(2 6 23 / 0) var(--tw-gradient-to-position) !important;
+  --tw-gradient-stops:
+    var(--tw-gradient-from),
+    rgb(2 6 23 / var(--tw-gradient-via-opacity, 1)) var(--tw-gradient-via-position),
+    var(--tw-gradient-to) !important;
+}
+
+.dev-blue-theme .text-black {
+  color: #050f33 !important;
+}
+
+.dev-blue-theme .border-black {
+  border-color: #050f33 !important;
+}
+
+.dev-blue-theme .partner-marquee-item {
+  color: #050f33;
+}
+
 @keyframes hero-path-flow {
   from {
     stroke-dashoffset: 0;

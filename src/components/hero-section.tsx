@@ -5,7 +5,7 @@ import { BackgroundPaths } from "@/components/ui/background-paths";
 import { cn } from "@/lib/utils";
 import logoWhiteNoBg from "@/images/logowhitenobg.png";
 
-const ROTATING_WORDS = ["softplats", "reliable", "fast"];
+const ROTATING_WORDS = ["softplats", "reliable", "fast", "scalable", "secure", "precise"];
 const HERO_B_LOGO_SRC = logoWhiteNoBg;
 
 export function HeroSection() {
@@ -30,7 +30,7 @@ export function HeroSection() {
       <div className="hero-content relative z-30 mx-auto grid min-h-screen w-full max-w-[1400px] grid-cols-1 items-end gap-12 px-6 pb-52 pt-32 lg:grid-cols-[1.35fr_0.65fr] lg:gap-8">
         <div className="relative w-full max-w-xl lg:max-w-none lg:pr-6">
           <div className="mb-8 flex items-center gap-4 sm:gap-5 lg:-ml-8">
-            <span className="relative inline-flex h-[5.7rem] w-[5.7rem] items-center justify-center overflow-hidden sm:h-[7.8rem] sm:w-[7.8rem] lg:h-[9.8rem] lg:w-[9.8rem] lg:translate-y-1">
+            <span className="relative inline-flex h-[5.7rem] w-[5.7rem] shrink-0 items-center justify-center overflow-hidden sm:h-[7.8rem] sm:w-[7.8rem] lg:h-[9.8rem] lg:w-[9.8rem] lg:translate-y-1">
               {heroLogoFailed ? (
                 <span className="text-7xl font-semibold tracking-tighter text-white sm:text-9xl lg:text-[10rem]">
                   B

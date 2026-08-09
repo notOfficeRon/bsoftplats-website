@@ -1,5 +1,5 @@
 import { type CSSProperties, type MouseEvent, type ReactNode, useCallback, useEffect, useRef, useState } from "react";
-import { ArrowRight, ChevronLeft, ChevronRight, Instagram, Linkedin } from "lucide-react";
+import { ChevronLeft, ChevronRight, Mail } from "lucide-react";
 import { HeroSection } from "@/components/hero-section";
 import { SiteHeader } from "@/components/site-header";
 import { Button } from "@/components/ui/button";
@@ -187,18 +187,19 @@ function ServicesScrollDemo() {
     };
   }, []);
 
-  const slideProgress = scrollProgress * (SERVICE_SCROLL_STEPS.length - 1);
-  const leftOpacity = revealProgress;
-  const rightOpacity = revealProgress;
-  const leftTranslateX = -84 * (1 - revealProgress);
-  const rightTranslateX = 84 * (1 - revealProgress);
-  const sideGlowOpacity = 0.14 + revealProgress * 0.46;
+  const activeStep = Math.min(
+    SERVICE_SCROLL_STEPS.length - 1,
+    Math.max(0, Math.round(scrollProgress * (SERVICE_SCROLL_STEPS.length - 1))),
+  );
+  const stackOpacity = 0.5 + revealProgress * 0.5;
+  const stackTranslateY = 40 * (1 - revealProgress);
+  const sideGlowOpacity = 0.08 + revealProgress * 0.28;
 
   return (
     <div ref={entryRef} className="relative">
-      <div className="sticky top-24 z-10 grid min-h-[72vh] items-center gap-10 lg:grid-cols-[1fr_1fr]">
+      <div className="sticky top-20 z-10 min-h-[70vh] sm:top-24 sm:min-h-[72vh]">
         <div
-          className="pointer-events-none absolute inset-y-0 left-1/2 z-0 w-screen -translate-x-1/2"
+          className="pointer-events-none absolute -inset-y-20 left-1/2 z-0 w-screen -translate-x-1/2 blur-[2px]"
           style={{ opacity: sideGlowOpacity }}
         >
           <div className="h-full w-full bg-[radial-gradient(700px_circle_at_0%_50%,rgba(255,255,255,0.28),transparent_58%),radial-gradient(700px_circle_at_100%_50%,rgba(255,255,255,0.28),transparent_58%)]" />
@@ -216,52 +217,55 @@ function ServicesScrollDemo() {
           style={{ opacity: 0.08 + revealProgress * 0.24 }}
         />
         <div
-          className="relative z-20 flex justify-center lg:justify-start"
+          className="relative z-20 mx-auto flex min-h-[70vh] w-full max-w-3xl items-center justify-center sm:min-h-[72vh]"
           style={{
-            opacity: leftOpacity,
-            transform: `translate3d(${leftTranslateX}px, 0, 0)`,
+            opacity: stackOpacity,
+            transform: `translate3d(0, ${stackTranslateY}px, 0)`,
           }}
         >
-          <div className="max-w-sm text-center lg:text-left">
-            <h3 className="text-4xl font-semibold tracking-tight text-white sm:text-5xl">Our Services</h3>
-            <p className="mt-4 text-sm text-zinc-400">
-              Scroll to move through our three core service tracks.
+          <div className="w-full">
+            <h3 className="mb-6 text-center text-3xl font-semibold tracking-tight text-white sm:mb-7 sm:text-5xl">
+              Our Services
+            </h3>
+            <p className="mb-8 text-center text-sm text-zinc-400">
+              All service tracks are visible. Scroll to highlight each one.
             </p>
-          </div>
-        </div>
-        <div
-          className="relative z-20 mx-auto aspect-square w-full max-w-md overflow-hidden border border-white/15 bg-white/[0.03]"
-          style={{
-            opacity: rightOpacity,
-            transform: `translate3d(${rightTranslateX}px, 0, 0)`,
-          }}
-        >
-          <div
-            className="flex h-full w-full"
-            style={{
-              transform: `translate3d(-${slideProgress * 100}%, 0, 0)`,
-            }}
-          >
-            {SERVICE_SCROLL_STEPS.map((step, index) => (
-              <div key={step.title} className="h-full w-full shrink-0 p-8 sm:p-10">
-                <p className="mb-6 text-xs uppercase tracking-[0.18em] text-zinc-500">
-                  Service {index + 1}
-                </p>
-                <h4 className="mb-4 text-2xl font-semibold tracking-tight text-white">
-                  {step.title}
-                </h4>
-                <p className="text-lg leading-relaxed text-zinc-200">{step.description}</p>
-              </div>
-            ))}
+            <div className="space-y-4">
+              {SERVICE_SCROLL_STEPS.map((step, index) => {
+                const isActive = index === activeStep;
+                return (
+                  <article
+                    key={step.title}
+                    className={`border p-6 transition-all duration-500 sm:p-8 ${
+                      isActive
+                        ? "border-white/35 bg-white/10 shadow-[0_0_35px_rgba(255,255,255,0.16)]"
+                        : "border-white/12 bg-white/[0.03] opacity-60 grayscale"
+                    }`}
+                  >
+                    <p className="mb-3 text-xs uppercase tracking-[0.18em] text-zinc-500">
+                      Service {index + 1}
+                    </p>
+                    <h4 className="mb-3 text-2xl font-semibold tracking-tight text-white">
+                      {step.title}
+                    </h4>
+                    <p className="text-sm leading-relaxed text-zinc-200 sm:text-base">
+                      {step.description}
+                    </p>
+                  </article>
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>
-      <div className="relative z-0 min-h-[220vh]" />
+      <div className="relative z-0 min-h-[190vh] sm:min-h-[200vh]" />
     </div>
   );
 }
 
 export default function App() {
+  const [showDevThemeToggle, setShowDevThemeToggle] = useState(false);
+  const [deepBlueThemeEnabled, setDeepBlueThemeEnabled] = useState(false);
   const [activeStoryIndex, setActiveStoryIndex] = useState(0);
   const [isStoryTransitioning, setIsStoryTransitioning] = useState(false);
   const [storyPartVisible, setStoryPartVisible] = useState<Record<StoryPartKey, boolean>>({
@@ -418,9 +422,24 @@ export default function App() {
     [storyPartTiming, storyPartVisible],
   );
 
+  useEffect(() => {
+    setShowDevThemeToggle(window.location.pathname.startsWith("/dev"));
+  }, []);
+
+  useEffect(() => {
+    document.body.classList.toggle("dev-blue-theme", deepBlueThemeEnabled);
+    return () => {
+      document.body.classList.remove("dev-blue-theme");
+    };
+  }, [deepBlueThemeEnabled]);
+
   return (
     <>
-      <SiteHeader />
+      <SiteHeader
+        showDevThemeToggle={showDevThemeToggle}
+        deepBlueThemeEnabled={deepBlueThemeEnabled}
+        onToggleDeepBlueTheme={() => setDeepBlueThemeEnabled((enabled) => !enabled)}
+      />
 
       <main className="bg-black">
         <HeroSection />
@@ -442,50 +461,109 @@ export default function App() {
           </div>
         </section>
 
-        <section aria-label="Companies we worked with" className="border-y border-black bg-white py-4">
-          <div className="mx-auto mb-2 max-w-6xl px-6 text-center">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-black">
+        <section aria-label="Companies we worked with" className="border-y border-white/10 bg-black py-5">
+          <div className="mx-auto mb-3 max-w-6xl px-6 text-center">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white">
               Our Partners
             </p>
           </div>
-          <div className="partner-marquee">
-            <div className="partner-marquee-track">
-              {BUSINESS_PARTNERS.map((partner, index) => (
-                <span key={`track-a-${partner}-${index}`} className="partner-marquee-item">
-                  {partner}
-                </span>
-              ))}
-            </div>
-            <div className="partner-marquee-track" aria-hidden="true">
-              {BUSINESS_PARTNERS.map((partner, index) => (
-                <span key={`${partner}-${index}`} className="partner-marquee-item">
-                  {partner}
-                </span>
-              ))}
+          <div className="bg-white py-4">
+            <div className="partner-marquee">
+              <div className="partner-marquee-track">
+                {BUSINESS_PARTNERS.map((partner, index) => (
+                  <span key={`track-a-${partner}-${index}`} className="partner-marquee-item">
+                    {partner}
+                  </span>
+                ))}
+              </div>
+              <div className="partner-marquee-track" aria-hidden="true">
+                {BUSINESS_PARTNERS.map((partner, index) => (
+                  <span key={`${partner}-${index}`} className="partner-marquee-item">
+                    {partner}
+                  </span>
+                ))}
+              </div>
             </div>
           </div>
         </section>
 
-        <section id="services" className="border-t border-white/10 py-28">
-          <div className="relative mx-auto max-w-6xl px-6">
+        <section id="services" className="border-t border-white/10 py-20 sm:py-28">
+          <div className="relative">
             <div className="pointer-events-none absolute inset-0">
               <MeshDriftShader className="h-full w-full opacity-55" />
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,transparent_35%,rgba(0,0,0,0.72)_100%)]" />
+              <div
+                className={
+                  deepBlueThemeEnabled
+                    ? "absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,transparent_35%,rgba(4,11,36,0.82)_100%)]"
+                    : "absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,transparent_35%,rgba(0,0,0,0.72)_100%)]"
+                }
+              />
             </div>
-            <ServicesScrollDemo />
+            <div className="relative mx-auto max-w-6xl px-6">
+              <ServicesScrollDemo />
+            </div>
           </div>
         </section>
 
-        <section id="success-stories" className="border-t border-white/10 py-28">
+        <section id="success-stories" className="border-t border-white/10 py-20 sm:py-28">
           <div className="mx-auto max-w-6xl px-6">
-            <h2 className="mb-4 text-center text-3xl font-semibold tracking-tight text-white sm:text-4xl">
+            <h2 className="mb-4 text-center text-3xl font-semibold tracking-tight text-white sm:mb-6 sm:text-4xl">
               Success Stories
             </h2>
-            <p className="mx-auto mb-12 max-w-2xl text-center text-base text-zinc-400">
-              Selected outcomes from real delivery partnerships.
-            </p>
-            <div className="relative left-1/2 w-screen -translate-x-1/2 border-y border-zinc-300 bg-white">
-              <div className="mx-auto grid min-h-[340px] w-full max-w-[1680px] grid-cols-[120px_1fr_120px] items-stretch px-4 sm:px-8 md:px-12">
+            <div className="mx-auto w-full max-w-5xl overflow-hidden border border-zinc-300 bg-white">
+              <div className="sm:hidden p-4">
+                <article className="grid w-full gap-5 text-black">
+                  <div
+                    className="flex aspect-square w-full items-center justify-center border border-zinc-300 bg-zinc-100 p-4"
+                    style={partStyle("image")}
+                  >
+                    <img
+                      src={logoBlackOnWhite}
+                      alt="BSoftPlats logo"
+                      className="h-full w-full object-contain"
+                    />
+                  </div>
+                  <div className="flex flex-col">
+                    <h3 className="mb-3 text-2xl font-semibold text-black" style={partStyle("title")}>
+                      {activeStory.title}
+                    </h3>
+                    <p className="mb-4 text-base leading-relaxed text-zinc-700" style={partStyle("summary")}>
+                      {activeStory.summary}
+                    </p>
+                    <a
+                      href={activeStory.href}
+                      className="w-fit text-sm font-semibold text-black underline underline-offset-4 hover:text-zinc-700"
+                      style={partStyle("link")}
+                    >
+                      Link here
+                    </a>
+                  </div>
+                </article>
+                <div className="mt-6 flex items-center justify-between">
+                  <button
+                    type="button"
+                    onClick={showPreviousStory}
+                    aria-label="Previous success story"
+                    className={`text-black transition-transform duration-200 hover:scale-110 hover:[filter:drop-shadow(0_0_8px_rgba(0,0,0,0.35))] ${
+                      activeArrow === "prev" ? "scale-125" : "scale-100"
+                    }`}
+                  >
+                    <ChevronLeft className="h-7 w-7" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={showNextStory}
+                    aria-label="Next success story"
+                    className={`text-black transition-transform duration-200 hover:scale-110 hover:[filter:drop-shadow(0_0_8px_rgba(0,0,0,0.35))] ${
+                      activeArrow === "next" ? "scale-125" : "scale-100"
+                    }`}
+                  >
+                    <ChevronRight className="h-7 w-7" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="mx-auto hidden min-h-[340px] w-full grid-cols-[120px_1fr_120px] items-stretch px-6 md:px-8 sm:grid">
                 <button
                   type="button"
                   onClick={showPreviousStory}
@@ -494,10 +572,10 @@ export default function App() {
                     activeArrow === "prev" ? "scale-125" : "scale-100"
                   }`}
                 >
-                  <ChevronLeft className="mx-auto h-8 w-8" />
+                  <ChevronLeft className="mx-auto h-6 w-6 sm:h-8 sm:w-8" />
                 </button>
 
-                <article className="mx-auto grid w-full max-w-6xl gap-8 p-6 text-black sm:p-8 md:grid-cols-[380px_minmax(0,1fr)]">
+                <article className="mx-auto grid w-full max-w-6xl gap-5 p-4 text-black sm:gap-8 sm:p-8 md:grid-cols-[380px_minmax(0,1fr)]">
                   <div
                     className="flex aspect-square w-full items-center justify-center border border-zinc-300 bg-zinc-100 p-4"
                     style={partStyle("image")}
@@ -509,7 +587,7 @@ export default function App() {
                     />
                   </div>
                   <div className="flex flex-col justify-center">
-                    <h3 className="mb-3 text-2xl font-semibold text-black" style={partStyle("title")}>
+                    <h3 className="mb-3 text-xl font-semibold text-black sm:text-2xl" style={partStyle("title")}>
                       {activeStory.title}
                     </h3>
                     <p className="mb-4 text-sm leading-relaxed text-zinc-700" style={partStyle("summary")}>
@@ -533,16 +611,17 @@ export default function App() {
                     activeArrow === "next" ? "scale-125" : "scale-100"
                   }`}
                 >
-                  <ChevronRight className="mx-auto h-8 w-8" />
+                  <ChevronRight className="mx-auto h-6 w-6 sm:h-8 sm:w-8" />
                 </button>
               </div>
-              <div className="mx-auto grid w-full max-w-[1680px] grid-cols-3 gap-4 px-8 py-3 md:px-14">
+              <div className="mx-auto grid w-full grid-cols-1 gap-3 border-t border-zinc-300 px-4 py-3 sm:grid-cols-3 sm:gap-4 sm:px-8">
                 {SUCCESS_STORIES.map((story, index) => {
                   const isActive = index === activeStoryIndex;
                   return (
                     <div key={story.title}>
                       <div className="mb-1 flex justify-between text-[11px] uppercase tracking-[0.14em] text-zinc-600">
-                        <span>{story.title}</span>
+                        <span className="hidden sm:inline">{story.title}</span>
+                        <span className="sm:hidden">Story {index + 1}</span>
                       </div>
                       <div className="h-[2px] w-full bg-zinc-300">
                         <div
@@ -564,7 +643,7 @@ export default function App() {
           </div>
         </section>
 
-        <section id="contact" className="border-y border-white/10 py-28">
+        <section id="contact" className="border-y border-white/10 py-20 sm:py-28">
           <div className="mx-auto grid max-w-6xl gap-12 px-6 lg:grid-cols-2 lg:items-center">
             <div>
               <h2 className="mb-4 text-3xl font-semibold tracking-tight text-white sm:text-4xl">
@@ -573,67 +652,32 @@ export default function App() {
               <p className="mb-8 max-w-lg text-base text-zinc-400">
                 Let’s talk about your roadmap, your bottlenecks, and what we can ship together.
               </p>
-              <div className="flex flex-wrap gap-3">
-                <Button asChild size="lg" className="rounded-full px-6">
-                  <a href="mailto:eliy.terman@bsoftplats.com">
-                    Get Started
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </a>
+              <div className="flex flex-wrap items-center gap-3 sm:flex-nowrap">
+                <Button size="lg" className="w-full rounded-full px-6 sm:w-auto">
+                  Contact
                 </Button>
-                <a
-                  href="https://www.linkedin.com/company/b-softplats/posts/?feedView=all"
-                  target="_blank"
-                  rel="noreferrer"
-                  aria-label="BSoftPlats on LinkedIn"
-                  className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-white text-black transition-colors hover:bg-zinc-200"
+                <Button
+                  size="lg"
+                  className="w-full rounded-full border border-white/25 bg-black px-6 text-white hover:bg-zinc-900 sm:w-auto"
                 >
-                  <Linkedin className="h-4 w-4" />
-                </a>
-                <a
-                  href="https://x.com/bsoftplats"
-                  target="_blank"
-                  rel="noreferrer"
-                  aria-label="BSoftPlats on X"
-                  className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-white text-black transition-colors hover:bg-zinc-200"
-                >
-                  <span className="text-sm font-semibold leading-none">X</span>
-                </a>
-                <a
-                  href="https://www.instagram.com/bsoftplats"
-                  target="_blank"
-                  rel="noreferrer"
-                  aria-label="BSoftPlats on Instagram"
-                  className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-white text-black transition-colors hover:bg-zinc-200"
-                >
-                  <Instagram className="h-4 w-4" />
-                </a>
+                  Apply
+                  <Mail className="ml-2 h-4 w-4" />
+                </Button>
               </div>
             </div>
 
             <ReactiveInfoPanel>
-              <div className="grid gap-5">
-                <div>
-                  <span className="text-xs font-semibold uppercase tracking-[0.12em] text-zinc-500">
-                    Email
-                  </span>
-                  <a href="mailto:eliy.terman@bsoftplats.com" className="mt-1 block text-white hover:text-zinc-300">
-                    eliy.terman@bsoftplats.com
-                  </a>
-                </div>
-                <div>
-                  <span className="text-xs font-semibold uppercase tracking-[0.12em] text-zinc-500">
-                    Phone
-                  </span>
-                  <a href="tel:+972544670093" className="mt-1 block text-white hover:text-zinc-300">
-                    +972 54-467-0093
-                  </a>
-                </div>
+              <div className="grid gap-6">
                 <div>
                   <span className="text-xs font-semibold uppercase tracking-[0.12em] text-zinc-500">
                     Contact
                   </span>
                   <span className="mt-1 block text-white">Elia Terman</span>
                 </div>
+                <Button size="lg" className="w-fit rounded-full px-6">
+                  <span>Apply</span>
+                  <Mail className="ml-2 h-4 w-4" />
+                </Button>
               </div>
             </ReactiveInfoPanel>
           </div>
@@ -643,7 +687,13 @@ export default function App() {
       <footer className="relative min-h-[430px] overflow-hidden bg-black">
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[330px] sm:h-[380px] md:h-[430px]">
           <Globe className="absolute left-1/2 top-full w-[min(88vw,720px)] max-w-none -translate-x-1/2 -translate-y-[58%] overflow-hidden rounded-full opacity-90" />
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_92%,rgba(255,255,255,0.1),rgba(5,5,5,0.88)_55%,rgba(0,0,0,1)_80%)]" />
+          <div
+            className={
+              deepBlueThemeEnabled
+                ? "absolute inset-0 bg-[radial-gradient(circle_at_50%_92%,rgba(168,199,255,0.16),rgba(4,11,36,0.9)_55%,rgba(3,7,24,1)_80%)]"
+                : "absolute inset-0 bg-[radial-gradient(circle_at_50%_92%,rgba(255,255,255,0.1),rgba(5,5,5,0.88)_55%,rgba(0,0,0,1)_80%)]"
+            }
+          />
         </div>
         <div className="absolute inset-x-0 bottom-0 z-10 py-6 text-center text-sm text-zinc-500">
           &copy; B-SoftPlats
