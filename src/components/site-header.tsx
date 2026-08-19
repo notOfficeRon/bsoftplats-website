@@ -23,6 +23,12 @@ export function SiteHeader({
 }) {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [linkPrefix, setLinkPrefix] = useState("");
+
+  useEffect(() => {
+    const path = window.location.pathname.replace(/\/+$/, "") || "/";
+    setLinkPrefix(path === "/stories" ? "/" : "");
+  }, []);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
@@ -53,7 +59,7 @@ export function SiteHeader({
           {NAV_LINKS.map((link) => (
             <a
               key={`${link.label}-${link.href}`}
-              href={link.href}
+              href={`${linkPrefix}${link.href}`}
               className="rounded px-2 py-2 text-sm text-zinc-300 transition-colors hover:text-white md:p-0"
               onClick={() => setMenuOpen(false)}
             >
@@ -61,7 +67,7 @@ export function SiteHeader({
             </a>
           ))}
           <a
-            href="#contact"
+            href={`${linkPrefix}#contact`}
             className="rounded border border-white/20 px-4 py-2 text-sm text-zinc-100 transition-colors hover:bg-white hover:text-black md:py-1.5"
             onClick={() => setMenuOpen(false)}
           >
@@ -98,7 +104,7 @@ export function SiteHeader({
               <span className="hidden sm:inline">Deep Blue</span>
             </button>
           ) : null}
-          <a href="#landing">
+          <a href={linkPrefix || "#landing"}>
             <img
               src={LOGO_SRC}
               alt="BSoftPlats logo"

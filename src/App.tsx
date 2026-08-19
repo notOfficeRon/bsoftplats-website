@@ -1,11 +1,11 @@
-import { type CSSProperties, type MouseEvent, type ReactNode, useCallback, useEffect, useRef, useState } from "react";
-import { ChevronLeft, ChevronRight, Mail } from "lucide-react";
+import { type CSSProperties, type MouseEvent, useCallback, useEffect, useRef, useState } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { HeroSection } from "@/components/hero-section";
 import { SiteHeader } from "@/components/site-header";
-import { Button } from "@/components/ui/button";
+import { ContactFlow } from "@/components/contact-flow";
 import { Globe } from "@/components/ui/globe";
 import { MeshDriftShader } from "@/components/ui/mesh-drift-shader";
-import logoBlackOnWhite from "@/images/bsoftplatslogo.png";
+import { StoriesErrorBoundary, StoryCover, getFeaturedStories } from "@/lib/stories";
 
 const WHAT_WE_DO_CARDS = [
   {
@@ -25,23 +25,13 @@ const WHAT_WE_DO_CARDS = [
   },
 ];
 
-const SUCCESS_STORIES = [
-  {
-    title: "Banking Platform Modernization",
-    summary: "Safer releases, improved uptime, and audit-ready infrastructure practices.",
-    href: "#",
-  },
-  {
-    title: "AI Feature Rollout",
-    summary: "From prototype to production with guardrails, observability, and measured impact.",
-    href: "#",
-  },
-  {
-    title: "Growth-Stage Product Team",
-    summary: "Accelerated roadmap delivery with a stable engineering foundation.",
-    href: "#",
-  },
-];
+const SUCCESS_STORIES = (() => {
+  try {
+    return getFeaturedStories();
+  } catch {
+    return [];
+  }
+})();
 const STORY_DURATION_MS = 6000;
 const STORY_PART_KEYS = ["image", "title", "summary", "link"] as const;
 type StoryPartKey = (typeof STORY_PART_KEYS)[number];
@@ -106,36 +96,6 @@ function HoverCard({
       </div>
       <h3 className="relative mb-3 text-xl font-semibold text-white">{title}</h3>
       <p className="relative text-sm leading-relaxed text-zinc-400">{description}</p>
-    </article>
-  );
-}
-
-function ReactiveInfoPanel({ children }: { children: ReactNode }) {
-  const [glowPosition, setGlowPosition] = useState({ x: 50, y: 50 });
-
-  const handleMouseMove = (event: MouseEvent<HTMLElement>) => {
-    const bounds = event.currentTarget.getBoundingClientRect();
-    const x = ((event.clientX - bounds.left) / bounds.width) * 100;
-    const y = ((event.clientY - bounds.top) / bounds.height) * 100;
-    setGlowPosition({ x, y });
-  };
-
-  return (
-    <article
-      className="group relative overflow-hidden border border-white/12 bg-white/[0.02] p-8 transition-colors duration-500 hover:bg-white/[0.04]"
-      onMouseMove={handleMouseMove}
-      style={
-        {
-          "--glow-x": `${glowPosition.x}%`,
-          "--glow-y": `${glowPosition.y}%`,
-        } as CSSProperties
-      }
-    >
-      <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100">
-        <div className="hover-grain-glow absolute inset-0" />
-        <div className="hover-grain-noise absolute inset-0" />
-      </div>
-      <div className="relative">{children}</div>
     </article>
   );
 }
@@ -325,7 +285,7 @@ export default function App() {
 
   const runStoryTransition = useCallback(
     (direction: "prev" | "next") => {
-      if (isStoryTransitioningRef.current) return;
+      if (SUCCESS_STORIES.length === 0 || isStoryTransitioningRef.current) return;
 
       setIsStoryTransitioning(true);
       isStoryTransitioningRef.current = true;
@@ -404,7 +364,7 @@ export default function App() {
   }, [clearStoryTimers]);
 
   useEffect(() => {
-    if (isStoryTransitioning) return;
+    if (SUCCESS_STORIES.length === 0 || isStoryTransitioning) return;
     const autoTimer = window.setTimeout(() => {
       showNextStory();
     }, STORY_DURATION_MS);
@@ -505,22 +465,23 @@ export default function App() {
           </div>
         </section>
 
+        <StoriesErrorBoundary>
         <section id="success-stories" className="border-t border-white/10 py-20 sm:py-28">
           <div className="mx-auto max-w-6xl px-6">
             <h2 className="mb-4 text-center text-3xl font-semibold tracking-tight text-white sm:mb-6 sm:text-4xl">
               Success Stories
             </h2>
+            {activeStory ? (
             <div className="mx-auto w-full max-w-5xl overflow-hidden border border-zinc-300 bg-white">
               <div className="sm:hidden p-4">
                 <article className="grid w-full gap-5 text-black">
                   <div
-                    className="flex aspect-square w-full items-center justify-center border border-zinc-300 bg-zinc-100 p-4"
+                    className="flex aspect-square w-full items-center justify-center overflow-hidden border border-zinc-300 bg-zinc-100"
                     style={partStyle("image")}
                   >
-                    <img
-                      src={logoBlackOnWhite}
-                      alt="BSoftPlats logo"
-                      className="h-full w-full object-contain"
+                    <StoryCover
+                      story={activeStory}
+                      className="h-full w-full object-cover object-center"
                     />
                   </div>
                   <div className="flex flex-col">
@@ -528,10 +489,10 @@ export default function App() {
                       {activeStory.title}
                     </h3>
                     <p className="mb-4 text-base leading-relaxed text-zinc-700" style={partStyle("summary")}>
-                      {activeStory.summary}
+                      {activeStory.description}
                     </p>
                     <a
-                      href={activeStory.href}
+                      href={activeStory.link}
                       className="w-fit text-sm font-semibold text-black underline underline-offset-4 hover:text-zinc-700"
                       style={partStyle("link")}
                     >
@@ -577,13 +538,12 @@ export default function App() {
 
                 <article className="mx-auto grid w-full max-w-6xl gap-5 p-4 text-black sm:gap-8 sm:p-8 md:grid-cols-[380px_minmax(0,1fr)]">
                   <div
-                    className="flex aspect-square w-full items-center justify-center border border-zinc-300 bg-zinc-100 p-4"
+                    className="flex aspect-square w-full items-center justify-center overflow-hidden border border-zinc-300 bg-zinc-100"
                     style={partStyle("image")}
                   >
-                    <img
-                      src={logoBlackOnWhite}
-                      alt="BSoftPlats logo"
-                      className="h-full w-full object-contain"
+                    <StoryCover
+                      story={activeStory}
+                      className="h-full w-full object-cover object-center"
                     />
                   </div>
                   <div className="flex flex-col justify-center">
@@ -591,10 +551,10 @@ export default function App() {
                       {activeStory.title}
                     </h3>
                     <p className="mb-4 text-sm leading-relaxed text-zinc-700" style={partStyle("summary")}>
-                      {activeStory.summary}
+                      {activeStory.description}
                     </p>
                     <a
-                      href={activeStory.href}
+                      href={activeStory.link}
                       className="w-fit text-sm font-semibold text-black underline underline-offset-4 hover:text-zinc-700"
                       style={partStyle("link")}
                     >
@@ -640,8 +600,18 @@ export default function App() {
                 })}
               </div>
             </div>
+            ) : null}
+            <div className="mt-6 text-center">
+              <a
+                href="/stories"
+                className="text-sm font-semibold text-white underline underline-offset-4 hover:text-zinc-300"
+              >
+                Check out more
+              </a>
+            </div>
           </div>
         </section>
+        </StoriesErrorBoundary>
 
         <section id="contact" className="border-y border-white/10 py-20 sm:py-28">
           <div className="mx-auto grid max-w-6xl gap-12 px-6 lg:grid-cols-2 lg:items-center">
@@ -649,37 +619,12 @@ export default function App() {
               <h2 className="mb-4 text-3xl font-semibold tracking-tight text-white sm:text-4xl">
                 Get in contact
               </h2>
-              <p className="mb-8 max-w-lg text-base text-zinc-400">
+              <p className="max-w-lg text-base text-zinc-400">
                 Let’s talk about your roadmap, your bottlenecks, and what we can ship together.
               </p>
-              <div className="flex flex-wrap items-center gap-3 sm:flex-nowrap">
-                <Button size="lg" className="w-full rounded-full px-6 sm:w-auto">
-                  Contact
-                </Button>
-                <Button
-                  size="lg"
-                  className="w-full rounded-full border border-white/25 bg-black px-6 text-white hover:bg-zinc-900 sm:w-auto"
-                >
-                  Apply
-                  <Mail className="ml-2 h-4 w-4" />
-                </Button>
-              </div>
             </div>
 
-            <ReactiveInfoPanel>
-              <div className="grid gap-6">
-                <div>
-                  <span className="text-xs font-semibold uppercase tracking-[0.12em] text-zinc-500">
-                    Contact
-                  </span>
-                  <span className="mt-1 block text-white">Elia Terman</span>
-                </div>
-                <Button size="lg" className="w-fit rounded-full px-6">
-                  <span>Apply</span>
-                  <Mail className="ml-2 h-4 w-4" />
-                </Button>
-              </div>
-            </ReactiveInfoPanel>
+            <ContactFlow />
           </div>
         </section>
       </main>
