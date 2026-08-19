@@ -1,8 +1,15 @@
-type ContactReason = "business" | "apply" | "other";
+type ContactReason = "business" | "apply" | "partnership" | "other";
 
 type ContactRequest = {
+  firstName?: string;
+  lastName?: string;
   name?: string;
   email?: string;
+  phone?: string;
+  company?: string;
+  jobRole?: string;
+  country?: string;
+  hearAbout?: string;
   message?: string;
   reason?: string;
   token?: string;
@@ -13,11 +20,21 @@ type ContactRequest = {
 const SUBJECT: Record<ContactReason, string> = {
   business: "Business inquiry",
   apply: "Job application",
+  partnership: "Partnership",
   other: "General inquiry",
 };
 
+function isReason(value: unknown): value is ContactReason {
+  return value === "business" || value === "apply" || value === "partnership" || value === "other";
+}
+
 function isEmail(value: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
+function str(value: unknown, max: number) {
+  if (typeof value !== "string") return "";
+  return value.trim().slice(0, max);
 }
 
 async function verifyTurnstile(token: string, ip: string | null) {
@@ -49,27 +66,41 @@ export async function POST(request: Request) {
     return Response.json({ ok: true });
   }
 
-  const name = typeof body.name === "string" ? body.name.trim() : "";
-  const email = typeof body.email === "string" ? body.email.trim() : "";
-  const message = typeof body.message === "string" ? body.message.trim() : "";
-  const token = typeof body.token === "string" ? body.token.trim() : "";
+  const firstName = str(body.firstName, 80);
+  const lastName = str(body.lastName, 80);
+  const name =
+    firstName || lastName ? `${firstName} ${lastName}`.trim() : str(body.name, 120);
+  const email = str(body.email, 200);
+  const phone = str(body.phone, 40);
+  const company = str(body.company, 120);
+  const jobRole = str(body.jobRole, 80);
+  const country = str(body.country, 80);
+  const hearAbout = str(body.hearAbout, 80);
+  const message = str(body.message, 4000);
+  const token = str(body.token, 2048);
   const reason = body.reason;
   const agreed = body.agreed === true;
 
   if (!agreed) {
     return Response.json({ ok: false, message: "Please agree to the privacy terms." }, { status: 400 });
   }
-  if (name.length < 1 || name.length > 120) {
-    return Response.json({ ok: false, message: "Please enter your name." }, { status: 400 });
+  if (!isReason(reason)) {
+    return Response.json({ ok: false, message: "Please choose a contact reason." }, { status: 400 });
   }
-  if (!isEmail(email) || email.length > 200) {
+  if (firstName.length < 1) {
+    return Response.json({ ok: false, message: "Please enter your first name." }, { status: 400 });
+  }
+  if (lastName.length < 1) {
+    return Response.json({ ok: false, message: "Please enter your last name." }, { status: 400 });
+  }
+  if (!isEmail(email)) {
     return Response.json({ ok: false, message: "Please enter a valid email." }, { status: 400 });
   }
-  if (message.length < 1 || message.length > 4000) {
-    return Response.json({ ok: false, message: "Please enter a message." }, { status: 400 });
+  if (company.length < 1) {
+    return Response.json({ ok: false, message: "Please enter your company." }, { status: 400 });
   }
-  if (reason !== "business" && reason !== "apply" && reason !== "other") {
-    return Response.json({ ok: false, message: "Please choose a contact reason." }, { status: 400 });
+  if (jobRole.length < 1) {
+    return Response.json({ ok: false, message: "Please select your job role." }, { status: 400 });
   }
   if (!token) {
     return Response.json({ ok: false, message: "Bot check expired. Go back and try again." }, { status: 400 });
@@ -93,8 +124,13 @@ export async function POST(request: Request) {
     `Reason: ${subject}`,
     `Name: ${name}`,
     `Email: ${email}`,
+    `Phone: ${phone || "—"}`,
+    `Company: ${company}`,
+    `Job role: ${jobRole}`,
+    `Country: ${country || "—"}`,
+    `How they heard: ${hearAbout || "—"}`,
     "",
-    message,
+    message || "(no message)",
   ].join("\n");
 
   const send = await fetch("https://api.resend.com/emails", {

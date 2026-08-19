@@ -6,29 +6,67 @@ import gdprBadge from "@/images/gdpr.png";
 
 const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY ?? "";
 
-type Step = "start" | "reason" | "bot" | "terms" | "send";
-type ContactReason = "business" | "apply" | "other";
+const REASONS = [
+  { id: "business", label: "Business inquiry" },
+  { id: "apply", label: "Apply for an opening" },
+  { id: "partnership", label: "Partnership" },
+  { id: "other", label: "Other" },
+] as const;
 
-const REASONS: { id: ContactReason; label: string; hint: string; emailSubject: string }[] = [
-  {
-    id: "business",
-    label: "Business inquiry",
-    hint: "I need help with a product, delivery, or partnership.",
-    emailSubject: "Business inquiry",
-  },
-  {
-    id: "apply",
-    label: "Apply for an opening",
-    hint: "I want to join the team.",
-    emailSubject: "Job application",
-  },
-  {
-    id: "other",
-    label: "Other",
-    hint: "Something else.",
-    emailSubject: "General inquiry",
-  },
-];
+type ContactReason = (typeof REASONS)[number]["id"];
+
+const HEAR_ABOUT = ["LinkedIn", "Google", "Referral", "Event / conference", "Other"] as const;
+const JOB_ROLES = [
+  "Founder / CEO",
+  "CTO / VP Engineering",
+  "Engineering Manager",
+  "Software Engineer",
+  "Product Manager",
+  "Recruiter / HR",
+  "Consultant",
+  "Student",
+  "Other",
+] as const;
+const COUNTRIES = [
+  "Israel",
+  "United States",
+  "United Kingdom",
+  "Germany",
+  "France",
+  "Netherlands",
+  "Spain",
+  "Italy",
+  "Portugal",
+  "Sweden",
+  "Norway",
+  "Denmark",
+  "Finland",
+  "Ireland",
+  "Switzerland",
+  "Austria",
+  "Belgium",
+  "Poland",
+  "Czech Republic",
+  "Romania",
+  "Ukraine",
+  "Canada",
+  "Mexico",
+  "Brazil",
+  "Argentina",
+  "India",
+  "Singapore",
+  "Australia",
+  "New Zealand",
+  "Japan",
+  "South Korea",
+  "United Arab Emirates",
+  "South Africa",
+  "Other",
+] as const;
+
+const fieldClass =
+  "h-11 w-full border border-white/20 bg-black px-3 text-sm text-white outline-none placeholder:text-zinc-500";
+const labelClass = "mb-1.5 block text-xs font-semibold uppercase tracking-[0.12em] text-zinc-400";
 
 declare global {
   interface Window {
@@ -41,6 +79,7 @@ declare global {
           callback: (token: string) => void;
           "error-callback"?: () => void;
           "expired-callback"?: () => void;
+          "timeout-callback"?: () => void;
         },
       ) => string;
       reset: (widgetId: string) => void;
@@ -48,8 +87,12 @@ declare global {
   }
 }
 
-function reasonLabel(reason: ContactReason | null) {
-  return REASONS.find((item) => item.id === reason)?.emailSubject ?? "General inquiry";
+function turnstileLog(event: string, detail?: Record<string, unknown>) {
+  if (detail) {
+    console.log(`[turnstile] ${event}`, detail);
+    return;
+  }
+  console.log(`[turnstile] ${event}`);
 }
 
 function BotCheck({
@@ -62,28 +105,64 @@ function BotCheck({
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (!TURNSTILE_SITE_KEY) return;
+    if (!TURNSTILE_SITE_KEY) {
+      turnstileLog("skip: VITE_TURNSTILE_SITE_KEY is empty. Restart vite after editing .env");
+      return;
+    }
+
+    turnstileLog("init", {
+      siteKeyLength: TURNSTILE_SITE_KEY.length,
+      siteKeyPrefix: TURNSTILE_SITE_KEY.slice(0, 6),
+    });
 
     const scriptId = "cf-turnstile";
     const existing = document.getElementById(scriptId) as HTMLScriptElement | null;
 
     const renderWidget = () => {
-      if (!widgetRef.current || !window.turnstile || widgetIdRef.current) return;
+      if (!widgetRef.current) {
+        turnstileLog("render skipped: widget container not mounted");
+        return;
+      }
+      if (!window.turnstile) {
+        turnstileLog("render skipped: window.turnstile missing");
+        return;
+      }
+      if (widgetIdRef.current) {
+        turnstileLog("render skipped: already rendered", { widgetId: widgetIdRef.current });
+        return;
+      }
+
+      turnstileLog("rendering widget");
       widgetIdRef.current = window.turnstile.render(widgetRef.current, {
         sitekey: TURNSTILE_SITE_KEY,
         theme: "dark",
         callback: (token) => {
+          turnstileLog("passed", { tokenLength: token.length });
           setError("");
           onPassed(token);
         },
-        "error-callback": () => setError("Bot check failed to load. Refresh and try again."),
-        "expired-callback": () => setError("Bot check expired. Complete it again."),
+        "error-callback": () => {
+          turnstileLog("error-callback (hostname mismatch? network? bad site key?)");
+          setError("Bot check failed to load. Refresh and try again.");
+        },
+        "expired-callback": () => {
+          turnstileLog("expired-callback: token died, complete it again");
+          setError("Bot check expired. Complete it again.");
+        },
+        "timeout-callback": () => {
+          turnstileLog("timeout-callback: challenge timed out");
+          setError("Bot check timed out. Refresh and try again.");
+        },
       });
+      turnstileLog("rendered", { widgetId: widgetIdRef.current });
     };
 
     if (existing && window.turnstile) {
+      turnstileLog("script already loaded, rendering");
       renderWidget();
-      return;
+      return () => {
+        widgetIdRef.current = null;
+      };
     }
 
     const script = existing ?? document.createElement("script");
@@ -91,8 +170,20 @@ function BotCheck({
     script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
     script.async = true;
     script.defer = true;
-    script.onload = renderWidget;
-    if (!existing) document.head.appendChild(script);
+    script.onload = () => {
+      turnstileLog("script loaded");
+      renderWidget();
+    };
+    script.onerror = () => {
+      turnstileLog("script failed to load (blocked? adblock? offline?)");
+      setError("Could not load Cloudflare Turnstile.");
+    };
+    if (!existing) {
+      turnstileLog("injecting script");
+      document.head.appendChild(script);
+    } else {
+      turnstileLog("waiting for existing script onload");
+    }
 
     return () => {
       widgetIdRef.current = null;
@@ -459,39 +550,62 @@ function PrivacyPolicyModal({ onClose }: { onClose: () => void }) {
 }
 
 export function ContactFlow() {
-  const [step, setStep] = useState<Step>("start");
-  const [reason, setReason] = useState<ContactReason | null>(null);
+  const [step, setStep] = useState<"start" | "bot">("start");
+  const [formOpen, setFormOpen] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState("");
   const [agreed, setAgreed] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
-  const [name, setName] = useState("");
+  const [reason, setReason] = useState<ContactReason | "">("");
+  const [hearAbout, setHearAbout] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [company, setCompany] = useState("");
+  const [jobRole, setJobRole] = useState("");
+  const [country, setCountry] = useState("");
   const [message, setMessage] = useState("");
   const [honeypot, setHoneypot] = useState("");
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState("");
   const [sendOk, setSendOk] = useState(false);
 
-  const handleBotPassed = useCallback((token: string) => {
-    setTurnstileToken(token);
-    setStep("terms");
+  const closeForm = useCallback(() => {
+    setFormOpen(false);
+    setSendOk(false);
+    setSendError("");
   }, []);
 
-  const goBack = () => {
-    if (step === "reason") setStep("start");
-    if (step === "bot") {
-      setTurnstileToken("");
-      setStep("reason");
-    }
-    if (step === "terms") {
-      setTurnstileToken("");
-      setStep("bot");
-    }
-    if (step === "send") setStep("terms");
-  };
+  useEffect(() => {
+    if (!formOpen) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && !showTerms) closeForm();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = previous;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [formOpen, showTerms, closeForm]);
+
+  const canSend =
+    agreed &&
+    Boolean(reason) &&
+    firstName.trim() !== "" &&
+    lastName.trim() !== "" &&
+    email.trim() !== "" &&
+    company.trim() !== "" &&
+    jobRole !== "";
+
+  const handleBotPassed = useCallback((token: string) => {
+    console.log("[turnstile] passed, waiting for Open contact form");
+    setTurnstileToken(token);
+  }, []);
 
   const submitContact = async () => {
-    if (sending || sendOk) return;
+    if (sending || sendOk || !canSend) return;
     setSendError("");
     setSending(true);
     try {
@@ -499,10 +613,16 @@ export function ContactFlow() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name,
-          email,
-          message,
           reason,
+          hearAbout,
+          firstName,
+          lastName,
+          email,
+          phone,
+          company,
+          jobRole,
+          country,
+          message,
           token: turnstileToken,
           agreed,
           website: honeypot,
@@ -524,10 +644,13 @@ export function ContactFlow() {
   return (
     <div className="relative flex h-[440px] flex-col overflow-hidden border border-white/12 bg-white/[0.02] p-6 sm:h-[460px] sm:p-8">
       <div className="mb-4 flex h-6 shrink-0 items-center">
-        {step !== "start" ? (
+        {step === "bot" ? (
           <button
             type="button"
-            onClick={goBack}
+            onClick={() => {
+              setTurnstileToken("");
+              setStep("start");
+            }}
             className="inline-flex items-center text-sm text-zinc-400 hover:text-white"
           >
             <ChevronLeft className="mr-1 h-4 w-4" />
@@ -537,152 +660,287 @@ export function ContactFlow() {
       </div>
 
       <div className={`min-h-0 flex-1 ${step === "start" ? "flex overflow-hidden" : "overflow-y-auto"}`}>
-      {step === "start" ? (
-        <button
-          type="button"
-          onClick={() => setStep("reason")}
-          className="flex h-full w-full flex-col items-center justify-center gap-3 border border-white/20 bg-white text-black transition-colors hover:bg-zinc-200"
-        >
-          <Mail className="h-8 w-8" />
-          <span className="text-3xl font-semibold tracking-tight">Contact</span>
-        </button>
-      ) : null}
-
-      {step === "reason" ? (
-        <div>
-          <h3 className="mb-2 text-2xl font-semibold text-white">What is the reason for your contact?</h3>
-          <p className="mb-6 text-sm text-zinc-400">Pick one. You can go back and change it later.</p>
-          <div className="grid gap-3">
-            {REASONS.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => {
-                  setReason(item.id);
-                  setStep("bot");
-                }}
-                className={`border px-4 py-4 text-left transition-colors ${
-                  reason === item.id
-                    ? "border-white bg-white/10 text-white"
-                    : "border-white/15 text-zinc-200 hover:border-white/40"
-                }`}
-              >
-                <span className="block font-semibold">{item.label}</span>
-                <span className="mt-1 block text-sm text-zinc-400">{item.hint}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-      ) : null}
-
-      {step === "bot" ? (
-        <div>
-          <h3 className="mb-2 text-2xl font-semibold text-white">Quick bot check</h3>
-          <p className="mb-6 text-sm text-zinc-400">Prove you're human, then we can continue.</p>
-          {turnstileToken ? (
-            <div className="grid gap-4">
-              <p className="text-sm text-zinc-300">You're verified.</p>
-              <Button size="lg" className="w-fit rounded-full px-6" onClick={() => setStep("terms")}>
-                Continue
-              </Button>
-            </div>
-          ) : (
-            <BotCheck onPassed={handleBotPassed} />
-          )}
-        </div>
-      ) : null}
-
-      {step === "terms" ? (
-        <div>
-          <h3 className="mb-2 text-2xl font-semibold text-white">Privacy and terms</h3>
-          <p className="mb-5 text-sm text-zinc-400">
-            Before we send your message, confirm you agree to how we handle this inquiry.
-          </p>
-          <label className="flex items-start gap-3 text-sm text-zinc-200">
-            <input
-              type="checkbox"
-              checked={agreed}
-              onChange={(event) => setAgreed(event.target.checked)}
-              className="mt-1 h-4 w-4"
-            />
-            <span>
-              I agree to the privacy terms for this contact request.
-            </span>
-          </label>
+        {step === "start" ? (
           <button
             type="button"
-            onClick={() => setShowTerms(true)}
-            className="mt-3 text-sm text-zinc-400 underline underline-offset-4 hover:text-white"
+            onClick={() => setStep("bot")}
+            className="flex h-full w-full flex-col items-center justify-center gap-3 border border-white/20 bg-white text-black transition-colors hover:bg-zinc-200"
           >
-            More information
+            <Mail className="h-8 w-8" />
+            <span className="text-3xl font-semibold tracking-tight">Get started</span>
+            <span className="text-sm text-zinc-600">Contact form</span>
           </button>
-          {showTerms ? <PrivacyPolicyModal onClose={() => setShowTerms(false)} /> : null}
-          <Button
-            size="lg"
-            className="mt-6 rounded-full px-6"
-            disabled={!agreed}
-            onClick={() => setStep("send")}
-          >
-            Continue
-          </Button>
-        </div>
-      ) : null}
+        ) : null}
 
-      {step === "send" ? (
-        sendOk ? (
-          <div className="flex h-full flex-col justify-center">
-            <p className="mb-2 text-sm uppercase tracking-[0.14em] text-zinc-500">Sent</p>
-            <h3 className="text-2xl font-semibold text-white">Message sent. We'll get back to you.</h3>
+        {step === "bot" ? (
+          <div>
+            <h3 className="mb-2 text-2xl font-semibold text-white">Quick bot check</h3>
+            <p className="mb-6 text-sm text-zinc-400">Verify you're human to open the contact form.</p>
+            {turnstileToken ? (
+              <div className="grid gap-4">
+                <p className="text-sm text-zinc-300">You're verified.</p>
+                <Button
+                  size="lg"
+                  className="w-fit rounded-full px-6"
+                  onClick={() => {
+                    console.log("[turnstile] opening contact overlay");
+                    setFormOpen(true);
+                  }}
+                >
+                  Open contact form
+                </Button>
+              </div>
+            ) : (
+              <BotCheck onPassed={handleBotPassed} />
+            )}
           </div>
-        ) : (
-          <form
-            className="grid gap-3"
-            onSubmit={(event) => {
-              event.preventDefault();
-              void submitContact();
-            }}
-          >
-            <input
-              tabIndex={-1}
-              autoComplete="off"
-              value={honeypot}
-              onChange={(event) => setHoneypot(event.target.value)}
-              className="absolute -left-[9999px] h-0 w-0 opacity-0"
-              aria-hidden="true"
-            />
-            <p className="text-xs uppercase tracking-[0.14em] text-zinc-500">{reasonLabel(reason)}</p>
-            <input
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              placeholder="Your name"
-              required
-              className="h-11 border border-white/20 bg-transparent px-3 text-sm text-white outline-none placeholder:text-zinc-500"
-            />
-            <input
-              type="email"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              placeholder="Your email"
-              required
-              className="h-11 border border-white/20 bg-transparent px-3 text-sm text-white outline-none placeholder:text-zinc-500"
-            />
-            <textarea
-              value={message}
-              onChange={(event) => setMessage(event.target.value)}
-              placeholder="Your message"
-              required
-              rows={4}
-              className="border border-white/20 bg-transparent px-3 py-2 text-sm text-white outline-none placeholder:text-zinc-500"
-            />
-            {sendError ? <p className="text-sm text-red-400">{sendError}</p> : null}
-            <Button type="submit" size="lg" className="w-fit rounded-full px-6" disabled={sending}>
-              {sending ? "Sending…" : "Start contact!"}
-              <Mail className="ml-2 h-4 w-4" />
-            </Button>
-          </form>
-        )
-      ) : null}
+        ) : null}
       </div>
+
+      {formOpen
+        ? createPortal(
+            <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 sm:p-8">
+              <button
+                type="button"
+                className="absolute inset-0 bg-black/80"
+                aria-label="Close contact form"
+                onClick={closeForm}
+              />
+              <div
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="contact-form-title"
+                className="relative z-10 flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden border border-white/15 bg-zinc-950"
+              >
+                <div className="flex items-center justify-between border-b border-white/10 px-5 py-4 sm:px-6">
+                  <h2 id="contact-form-title" className="text-xl font-semibold text-white">
+                    Contact form
+                  </h2>
+                  <button type="button" onClick={closeForm} className="text-zinc-400 hover:text-white" aria-label="Close">
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+
+                {sendOk ? (
+                  <div className="px-5 py-16 text-center sm:px-6">
+                    <p className="mb-2 text-sm uppercase tracking-[0.14em] text-zinc-500">Sent</p>
+                    <p className="text-2xl font-semibold text-white">Message sent. We'll get back to you.</p>
+                  </div>
+                ) : (
+                  <form
+                    className="overflow-y-auto px-5 py-5 sm:px-6"
+                    onSubmit={(event) => {
+                      event.preventDefault();
+                      void submitContact();
+                    }}
+                  >
+                    <input
+                      tabIndex={-1}
+                      autoComplete="off"
+                      value={honeypot}
+                      onChange={(event) => setHoneypot(event.target.value)}
+                      className="absolute -left-[9999px] h-0 w-0 opacity-0"
+                      aria-hidden="true"
+                    />
+
+                    <div className="mb-4">
+                      <label className={labelClass} htmlFor="inquiry-reason">
+                        Select reasons of inquiry *
+                      </label>
+                      <select
+                        id="inquiry-reason"
+                        required
+                        value={reason}
+                        onChange={(event) => setReason(event.target.value as ContactReason | "")}
+                        className={fieldClass}
+                      >
+                        <option value="">Please Select</option>
+                        {REASONS.map((item) => (
+                          <option key={item.id} value={item.id}>
+                            {item.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="mb-4">
+                      <label className={labelClass} htmlFor="hear-about">
+                        How did you hear about us?
+                      </label>
+                      <select
+                        id="hear-about"
+                        value={hearAbout}
+                        onChange={(event) => setHearAbout(event.target.value)}
+                        className={fieldClass}
+                      >
+                        <option value="">Please Select</option>
+                        {HEAR_ABOUT.map((item) => (
+                          <option key={item} value={item}>
+                            {item}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="mb-4 grid gap-4 sm:grid-cols-2">
+                      <div>
+                        <label className={labelClass} htmlFor="first-name">
+                          First name *
+                        </label>
+                        <input
+                          id="first-name"
+                          required
+                          value={firstName}
+                          onChange={(event) => setFirstName(event.target.value)}
+                          className={fieldClass}
+                        />
+                      </div>
+                      <div>
+                        <label className={labelClass} htmlFor="last-name">
+                          Last name *
+                        </label>
+                        <input
+                          id="last-name"
+                          required
+                          value={lastName}
+                          onChange={(event) => setLastName(event.target.value)}
+                          className={fieldClass}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="mb-4 grid gap-4 sm:grid-cols-2">
+                      <div>
+                        <label className={labelClass} htmlFor="email">
+                          Email address *
+                        </label>
+                        <input
+                          id="email"
+                          type="email"
+                          required
+                          value={email}
+                          onChange={(event) => setEmail(event.target.value)}
+                          className={fieldClass}
+                        />
+                      </div>
+                      <div>
+                        <label className={labelClass} htmlFor="phone">
+                          Phone number
+                        </label>
+                        <input
+                          id="phone"
+                          type="tel"
+                          value={phone}
+                          onChange={(event) => setPhone(event.target.value)}
+                          className={fieldClass}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="mb-4 grid gap-4 sm:grid-cols-2">
+                      <div>
+                        <label className={labelClass} htmlFor="company">
+                          Company *
+                        </label>
+                        <input
+                          id="company"
+                          required
+                          value={company}
+                          onChange={(event) => setCompany(event.target.value)}
+                          className={fieldClass}
+                        />
+                      </div>
+                      <div>
+                        <label className={labelClass} htmlFor="job-role">
+                          Job Role *
+                        </label>
+                        <select
+                          id="job-role"
+                          required
+                          value={jobRole}
+                          onChange={(event) => setJobRole(event.target.value)}
+                          className={fieldClass}
+                        >
+                          <option value="">Please Select</option>
+                          {JOB_ROLES.map((item) => (
+                            <option key={item} value={item}>
+                              {item}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="mb-4">
+                      <label className={labelClass} htmlFor="country">
+                        Country
+                      </label>
+                      <select
+                        id="country"
+                        value={country}
+                        onChange={(event) => setCountry(event.target.value)}
+                        className={fieldClass}
+                      >
+                        <option value="">Please Select</option>
+                        {COUNTRIES.map((item) => (
+                          <option key={item} value={item}>
+                            {item}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="mb-6">
+                      <label className={labelClass} htmlFor="message">
+                        Message
+                      </label>
+                      <textarea
+                        id="message"
+                        value={message}
+                        onChange={(event) => setMessage(event.target.value)}
+                        rows={5}
+                        className="w-full border border-white/20 bg-black px-3 py-2 text-sm text-white outline-none placeholder:text-zinc-500"
+                      />
+                    </div>
+
+                    <div className="mb-5 flex items-start gap-3 text-sm text-zinc-200">
+                      <input
+                        id="gdpr-agree"
+                        type="checkbox"
+                        checked={agreed}
+                        onChange={(event) => setAgreed(event.target.checked)}
+                        className="mt-1 h-4 w-4 shrink-0"
+                      />
+                      <span>
+                        <label htmlFor="gdpr-agree" className="cursor-pointer">
+                          I have read and agree to B-SoftPlats’s Privacy Policy. I consent to B-SoftPlats
+                          storing and using my submitted information to respond to my enquiry.
+                        </label>{" "}
+                        <button
+                          type="button"
+                          onClick={() => setShowTerms(true)}
+                          className="text-zinc-400 underline underline-offset-4 hover:text-white"
+                        >
+                          More information
+                        </button>
+                      </span>
+                    </div>
+
+                    {sendError ? <p className="mb-4 text-sm text-red-400">{sendError}</p> : null}
+
+                    <Button type="submit" size="lg" className="rounded-full px-6" disabled={!canSend || sending}>
+                      {sending ? "Sending…" : "Send"}
+                      <Mail className="ml-2 h-4 w-4" />
+                    </Button>
+                  </form>
+                )}
+              </div>
+            </div>,
+            document.body,
+          )
+        : null}
+
+      {showTerms ? <PrivacyPolicyModal onClose={() => setShowTerms(false)} /> : null}
     </div>
   );
 }
