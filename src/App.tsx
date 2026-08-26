@@ -225,7 +225,7 @@ function ServicesScrollDemo() {
 
 export default function App() {
   const [showDevThemeToggle, setShowDevThemeToggle] = useState(false);
-  const [deepBlueThemeEnabled, setDeepBlueThemeEnabled] = useState(false);
+  const [deepBlueThemeEnabled, setDeepBlueThemeEnabled] = useState(true);
   const [activeStoryIndex, setActiveStoryIndex] = useState(0);
   const [isStoryTransitioning, setIsStoryTransitioning] = useState(false);
   const [storyPartVisible, setStoryPartVisible] = useState<Record<StoryPartKey, boolean>>({
