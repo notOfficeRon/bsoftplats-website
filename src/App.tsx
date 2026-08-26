@@ -404,6 +404,38 @@ export default function App() {
       <main className="bg-black">
         <HeroSection />
 
+        <section id="overview" className="border-y border-white/10 py-10 md:hidden">
+          <div className="mx-auto max-w-6xl px-6">
+            <h2 className="mb-5 text-2xl font-semibold tracking-tight text-white">Overview</h2>
+            <div className="grid grid-cols-2 gap-3">
+              <a
+                href="#about"
+                className="rounded-lg border border-white/15 bg-white/[0.04] px-4 py-3 text-sm font-medium text-zinc-100 transition-colors hover:bg-white/[0.08]"
+              >
+                About
+              </a>
+              <a
+                href="#services"
+                className="rounded-lg border border-white/15 bg-white/[0.04] px-4 py-3 text-sm font-medium text-zinc-100 transition-colors hover:bg-white/[0.08]"
+              >
+                Services
+              </a>
+              <a
+                href="#success-stories"
+                className="rounded-lg border border-white/15 bg-white/[0.04] px-4 py-3 text-sm font-medium text-zinc-100 transition-colors hover:bg-white/[0.08]"
+              >
+                Success Stories
+              </a>
+              <a
+                href="#contact"
+                className="rounded-lg border border-white/15 bg-white/[0.04] px-4 py-3 text-sm font-medium text-zinc-100 transition-colors hover:bg-white/[0.08]"
+              >
+                Apply or Contact
+              </a>
+            </div>
+          </div>
+        </section>
+
         <section id="about" className="border-t border-white/10 py-40 sm:py-44 lg:py-48">
           <div className="mx-auto max-w-6xl px-6">
             <h2 className="mb-14 text-center text-4xl font-semibold tracking-tight text-white sm:text-5xl">
