@@ -492,7 +492,30 @@ export default function App() {
               />
             </div>
             <div className="relative mx-auto max-w-6xl px-6">
-              <ServicesScrollDemo />
+              <div className="md:hidden">
+                <h3 className="mb-6 text-center text-3xl font-semibold tracking-tight text-white">
+                  Our Services
+                </h3>
+                <p className="mb-8 text-center text-sm text-zinc-400">
+                  Core tracks we deliver across product and platform work.
+                </p>
+                <div className="space-y-4">
+                  {SERVICE_SCROLL_STEPS.map((step, index) => (
+                    <article key={step.title} className="border border-white/12 bg-white/[0.04] p-6">
+                      <p className="mb-3 text-xs uppercase tracking-[0.18em] text-zinc-500">
+                        Service {index + 1}
+                      </p>
+                      <h4 className="mb-3 text-2xl font-semibold tracking-tight text-white">
+                        {step.title}
+                      </h4>
+                      <p className="text-sm leading-relaxed text-zinc-200">{step.description}</p>
+                    </article>
+                  ))}
+                </div>
+              </div>
+              <div className="hidden md:block">
+                <ServicesScrollDemo />
+              </div>
             </div>
           </div>
         </section>
