@@ -553,8 +553,9 @@ function PrivacyPolicyModal({ onClose }: { onClose: () => void }) {
 }
 
 export function ContactFlow() {
-  const [step, setStep] = useState<"start" | "reason" | "bot">("start");
+  const [step, setStep] = useState<"start" | "bot">("start");
   const [formOpen, setFormOpen] = useState(false);
+  const [formModalStep, setFormModalStep] = useState<"reason" | "details">("reason");
   const [turnstileToken, setTurnstileToken] = useState("");
   const [agreed, setAgreed] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
@@ -700,15 +701,11 @@ export function ContactFlow() {
   return (
     <div className="relative flex h-[440px] flex-col overflow-hidden border border-white/12 bg-white/[0.02] p-6 sm:h-[460px] sm:p-8">
       <div className="mb-4 flex h-6 shrink-0 items-center">
-        {step === "reason" || step === "bot" ? (
+        {step === "bot" ? (
           <button
             type="button"
             onClick={() => {
-              if (step === "bot") {
-                setTurnstileToken("");
-                setStep("reason");
-                return;
-              }
+              setTurnstileToken("");
               setStep("start");
             }}
             className="inline-flex items-center text-sm text-zinc-400 hover:text-white"
@@ -723,40 +720,13 @@ export function ContactFlow() {
         {step === "start" ? (
           <button
             type="button"
-            onClick={() => setStep("reason")}
+            onClick={() => setStep("bot")}
             className="flex h-full w-full flex-col items-center justify-center gap-3 border border-white/20 bg-white text-black transition-colors hover:bg-zinc-200"
           >
             <Mail className="h-8 w-8" />
             <span className="text-3xl font-semibold tracking-tight">Get started</span>
             <span className="text-sm text-zinc-600">Contact form</span>
           </button>
-        ) : null}
-
-        {step === "reason" ? (
-          <div>
-            <h3 className="mb-2 text-2xl font-semibold text-white">What brings you here?</h3>
-            <p className="mb-6 text-sm text-zinc-400">Choose one before continuing.</p>
-            <div className="grid gap-3">
-              {REASONS.map((item) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => {
-                    setReason(item.id);
-                    setStep("bot");
-                  }}
-                  className={`border px-4 py-4 text-left transition-colors ${
-                    reason === item.id
-                      ? "border-white bg-white/10 text-white"
-                      : "border-white/15 text-zinc-200 hover:border-white/40"
-                  }`}
-                >
-                  <span className="block font-semibold">{item.label}</span>
-                  <span className="mt-1 block text-sm text-zinc-400">{item.hint}</span>
-                </button>
-              ))}
-            </div>
-          </div>
         ) : null}
 
         {step === "bot" ? (
@@ -771,6 +741,7 @@ export function ContactFlow() {
                   className="w-fit rounded-full px-6"
                   onClick={() => {
                     console.log("[turnstile] opening contact overlay");
+                    setFormModalStep(reason ? "details" : "reason");
                     setFormOpen(true);
                   }}
                 >
@@ -800,9 +771,21 @@ export function ContactFlow() {
                 className="relative z-10 flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-white/[0.12] bg-surface-elevated"
               >
                 <div className="flex items-center justify-between border-b border-white/10 px-5 py-4 sm:px-6">
-                  <h2 id="contact-form-title" className="text-xl font-semibold text-white">
-                    Contact form
-                  </h2>
+                  <div className="flex items-center gap-2">
+                    {formModalStep === "details" && !sendOk ? (
+                      <button
+                        type="button"
+                        onClick={() => setFormModalStep("reason")}
+                        className="mr-1 inline-flex items-center text-sm text-zinc-400 hover:text-white"
+                      >
+                        <ChevronLeft className="mr-1 h-4 w-4" />
+                        Back
+                      </button>
+                    ) : null}
+                    <h2 id="contact-form-title" className="text-xl font-semibold text-white">
+                      {formModalStep === "reason" ? "What brings you here?" : "Contact form"}
+                    </h2>
+                  </div>
                   <button type="button" onClick={closeForm} className="text-zinc-400 hover:text-white" aria-label="Close">
                     <X className="h-5 w-5" />
                   </button>
@@ -813,6 +796,30 @@ export function ContactFlow() {
                     <p className="mb-2 text-sm uppercase tracking-[0.14em] text-zinc-500">Almost done</p>
                     <p className="text-2xl font-semibold text-white">Check your email to confirm your inquiry.</p>
                     <p className="mt-3 text-sm text-zinc-400">The link expires in 5 minutes.</p>
+                  </div>
+                ) : formModalStep === "reason" ? (
+                  <div className="overflow-y-auto bg-surface-deep/80 px-5 py-5 sm:px-6">
+                    <p className="mb-6 text-sm text-zinc-400">Choose one to continue.</p>
+                    <div className="grid gap-3">
+                      {REASONS.map((item) => (
+                        <button
+                          key={item.id}
+                          type="button"
+                          onClick={() => {
+                            setReason(item.id);
+                            setFormModalStep("details");
+                          }}
+                          className={`border px-4 py-4 text-left transition-colors ${
+                            reason === item.id
+                              ? "border-white bg-white/10 text-white"
+                              : "border-white/15 text-zinc-200 hover:border-white/40"
+                          }`}
+                        >
+                          <span className="block font-semibold">{item.label}</span>
+                          <span className="mt-1 block text-sm text-zinc-400">{item.hint}</span>
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 ) : (
                   <form

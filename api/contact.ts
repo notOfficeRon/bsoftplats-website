@@ -10,7 +10,7 @@ import {
   validateBusinessEmailWithMx,
   verifyTurnstile,
   type InquiryPayload,
-} from "./_lib/contact-shared";
+} from "../lib/contact-shared.js";
 
 type ContactRequest = {
   firstName?: string;

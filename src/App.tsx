@@ -4,7 +4,6 @@ import { HeroSection } from "@/components/hero-section";
 import { SiteHeader } from "@/components/site-header";
 import { ContactFlow } from "@/components/contact-flow";
 import { Globe } from "@/components/ui/globe";
-import { MeshDriftShader } from "@/components/ui/mesh-drift-shader";
 import { StoriesErrorBoundary, StoryCover, getFeaturedStories } from "@/lib/stories";
 
 const WHAT_WE_DO_CARDS = [
@@ -153,29 +152,10 @@ function ServicesScrollDemo() {
   );
   const stackOpacity = 0.5 + revealProgress * 0.5;
   const stackTranslateY = 40 * (1 - revealProgress);
-  const sideGlowOpacity = 0.08 + revealProgress * 0.28;
 
   return (
     <div ref={entryRef} className="relative">
       <div className="sticky top-20 z-10 min-h-[70vh] sm:top-24 sm:min-h-[72vh]">
-        <div
-          className="pointer-events-none absolute -inset-y-20 left-1/2 z-0 w-screen -translate-x-1/2 blur-[2px]"
-          style={{ opacity: sideGlowOpacity }}
-        >
-          <div className="h-full w-full bg-[radial-gradient(700px_circle_at_0%_50%,rgba(255,255,255,0.28),transparent_58%),radial-gradient(700px_circle_at_100%_50%,rgba(255,255,255,0.28),transparent_58%)]" />
-        </div>
-        <div
-          className="floating-blob pointer-events-none absolute left-[8%] top-[22%] z-0 h-52 w-52 rounded-full bg-white/30 blur-[95px]"
-          style={{ opacity: 0.16 + revealProgress * 0.36 }}
-        />
-        <div
-          className="floating-blob floating-blob-delay pointer-events-none absolute right-[8%] top-[56%] z-0 h-56 w-56 rounded-full bg-white/26 blur-[105px]"
-          style={{ opacity: 0.14 + revealProgress * 0.34 }}
-        />
-        <div
-          className="floating-blob pointer-events-none absolute left-[38%] top-[66%] z-0 h-44 w-44 rounded-full bg-white/20 blur-[90px]"
-          style={{ opacity: 0.08 + revealProgress * 0.24 }}
-        />
         <div
           className="relative z-20 mx-auto flex min-h-[70vh] w-full max-w-3xl items-center justify-center sm:min-h-[72vh]"
           style={{
@@ -482,18 +462,7 @@ export default function App() {
         </section>
 
         <section id="services" className="border-t border-white/10 py-20 sm:py-28">
-          <div className="relative">
-            <div className="pointer-events-none absolute inset-0">
-              <MeshDriftShader className="h-full w-full opacity-55" />
-              <div
-                className={
-                  deepBlueThemeEnabled
-                    ? "absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,transparent_35%,rgba(11,16,32,0.82)_100%)]"
-                    : "absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,transparent_35%,rgba(0,0,0,0.72)_100%)]"
-                }
-              />
-            </div>
-            <div className="relative mx-auto max-w-6xl px-6">
+          <div className="mx-auto max-w-6xl px-6">
               <div className="md:hidden">
                 <h3 className="mb-6 text-center text-3xl font-semibold tracking-tight text-white">
                   Our Services
@@ -518,7 +487,6 @@ export default function App() {
               <div className="hidden md:block">
                 <ServicesScrollDemo />
               </div>
-            </div>
           </div>
         </section>
 

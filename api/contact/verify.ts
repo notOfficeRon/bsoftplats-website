@@ -4,7 +4,7 @@ import {
   sendResendEmail,
   SUBJECT,
   verifyInquiryToken,
-} from "../_lib/contact-shared";
+} from "../../lib/contact-shared.js";
 
 export async function GET(request: Request) {
   const requestId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
