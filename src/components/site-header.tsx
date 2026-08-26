@@ -42,15 +42,15 @@ export function SiteHeader({
         "fixed inset-x-0 top-0 z-50 h-[72px] transition-colors",
         scrolled &&
           (deepBlueThemeEnabled
-            ? "border-b border-white/10 bg-[#040b24]/85 backdrop-blur-xl"
-            : "border-b border-white/10 bg-black/80 backdrop-blur-xl"),
+            ? "border-b border-white/[0.12] bg-surface-deep/90 backdrop-blur-xl"
+            : "border-b border-white/[0.12] bg-canvas-dark/80 backdrop-blur-xl"),
       )}
     >
       <div className="mx-auto flex h-full w-full max-w-[1600px] items-center justify-between gap-8 px-4 md:px-8">
         <nav
           className={cn(
             "absolute left-4 right-4 top-[calc(72px+0.5rem)] flex flex-col gap-1 border border-white/10 p-2 md:static md:left-auto md:right-auto md:top-auto md:flex-row md:items-center md:gap-10 md:border-0 md:bg-transparent md:p-0",
-            deepBlueThemeEnabled ? "bg-[#040b24]" : "bg-black",
+            deepBlueThemeEnabled ? "bg-surface-deep" : "bg-canvas-dark",
             menuOpen ? "flex" : "hidden md:flex",
           )}
           aria-label="Primary"
@@ -119,7 +119,7 @@ export function SiteHeader({
               )}
               aria-hidden={!scrolled}
             >
-              softplats
+              SoftPlats
             </span>
           </a>
         </div>

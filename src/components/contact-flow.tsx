@@ -7,13 +7,16 @@ import gdprBadge from "@/images/gdpr.png";
 const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY ?? "";
 
 const REASONS = [
-  { id: "business", label: "Business inquiry" },
-  { id: "apply", label: "Apply for an opening" },
-  { id: "partnership", label: "Partnership" },
-  { id: "other", label: "Other" },
+  { id: "business", label: "Business inquiry", hint: "Partnerships, delivery, or product work." },
+  { id: "apply", label: "Apply for an opening", hint: "Join the BSoftPlats team." },
 ] as const;
 
 type ContactReason = (typeof REASONS)[number]["id"];
+type RequiredFieldKey = "firstName" | "lastName" | "email" | "company" | "jobRole" | "agreed";
+
+function reasonLabel(reason: ContactReason | "") {
+  return REASONS.find((item) => item.id === reason)?.label ?? "";
+}
 
 const HEAR_ABOUT = ["LinkedIn", "Google", "Referral", "Event / conference", "Other"] as const;
 const JOB_ROLES = [
@@ -65,7 +68,7 @@ const COUNTRIES = [
 ] as const;
 
 const fieldClass =
-  "h-11 w-full rounded-lg border border-blue-200/25 bg-[#0b1a45] px-3 text-sm text-white outline-none placeholder:text-zinc-400";
+  "h-11 w-full rounded-lg border border-white/[0.12] bg-surface-deep px-3 text-sm text-white outline-none placeholder:text-white/50";
 const labelClass = "mb-1.5 block text-xs font-semibold uppercase tracking-[0.12em] text-zinc-400";
 
 declare global {
@@ -232,11 +235,11 @@ function PrivacyPolicyModal({ onClose }: { onClose: () => void }) {
         role="dialog"
         aria-modal="true"
         aria-labelledby="privacy-policy-title"
-        className="relative z-10 flex max-h-[88vh] w-full max-w-3xl flex-col overflow-hidden border border-white/15 bg-zinc-950"
+        className="relative z-10 flex max-h-[88vh] w-full max-w-3xl flex-col overflow-hidden border border-white/[0.12] bg-surface-elevated"
       >
         <div className="flex items-center justify-between border-b border-white/10 px-5 py-4 sm:px-8">
           <h2 id="privacy-policy-title" className="text-xl font-semibold text-white sm:text-2xl">
-            B-SoftPlats’s Privacy
+            BSoftPlats’s Privacy
           </h2>
           <button
             type="button"
@@ -249,19 +252,19 @@ function PrivacyPolicyModal({ onClose }: { onClose: () => void }) {
         </div>
         <div className="overflow-y-auto px-5 py-6 text-sm leading-relaxed text-zinc-300 sm:px-8">
           <p className="mb-4">
-            This privacy policy explains how B-SoftPlats handles your personal information and data.
+            This privacy policy explains how BSoftPlats handles your personal information and data.
             The policy is structured so you can quickly find answers to the questions that interest
             you the most.
           </p>
           <p className="mb-4">
             Your privacy is important to us. This privacy policy applies to all the services offered
-            by B-SoftPlats and any affiliated entity (collectively “B-SoftPlats”) except where
+            by BSoftPlats and any affiliated entity (collectively “BSoftPlats”) except where
             otherwise noted. We refer to those services collectively as the “services” in this
             policy. This privacy policy describes how we collect, share, use, and protect the
             information we collect when you use our services.
           </p>
           <p className="mb-6">
-            The terms “we,” “our” and “us” in this Privacy Policy mean B-SoftPlats. The terms “you”
+            The terms “we,” “our” and “us” in this Privacy Policy mean BSoftPlats. The terms “you”
             and “your” refer to all users of the services. “Computer” means any personal computer,
             client computer, server computer, mobile device, communication device or any other
             device or system capable of accessing, communicating with, and/or using the services.
@@ -343,7 +346,7 @@ function PrivacyPolicyModal({ onClose }: { onClose: () => void }) {
           <p className="mb-4">
             Do You Administer the Surveys? Surveys are administered by us. We host the surveys on
             our services and collect the responses submitted. If you have any questions about a
-            survey you are taking, please contact B-SoftPlats at{" "}
+            survey you are taking, please contact BSoftPlats at{" "}
             <a className="underline underline-offset-2 hover:text-white" href="mailto:privacy@bsoftplats.com">
               privacy@bsoftplats.com
             </a>{" "}
@@ -393,7 +396,7 @@ function PrivacyPolicyModal({ onClose }: { onClose: () => void }) {
           <h3 className="mb-2 text-base font-semibold text-white">Safety of Minors</h3>
           <p className="mb-6">
             Our services are not intended for and may not be used by minors. “Minors” are
-            individuals under the age of majority in their place of residence. B-SoftPlats does not
+            individuals under the age of majority in their place of residence. BSoftPlats does not
             knowingly collect personal data from minors or allow them to register. If it comes to
             our attention that we have collected personal data from a minor, we may delete this
             information without notice. If you have reason to believe that this has occurred, please
@@ -550,7 +553,7 @@ function PrivacyPolicyModal({ onClose }: { onClose: () => void }) {
 }
 
 export function ContactFlow() {
-  const [step, setStep] = useState<"start" | "bot">("start");
+  const [step, setStep] = useState<"start" | "reason" | "bot">("start");
   const [formOpen, setFormOpen] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState("");
   const [agreed, setAgreed] = useState(false);
@@ -569,6 +572,8 @@ export function ContactFlow() {
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState("");
   const [sendOk, setSendOk] = useState(false);
+  const [missingPulse, setMissingPulse] = useState<Partial<Record<RequiredFieldKey, boolean>>>({});
+  const missingPulseTimerRef = useRef<number | null>(null);
 
   const closeForm = useCallback(() => {
     setFormOpen(false);
@@ -599,13 +604,48 @@ export function ContactFlow() {
     company.trim() !== "" &&
     jobRole !== "";
 
+  const getMissingRequiredFields = useCallback((): RequiredFieldKey[] => {
+    const missing: RequiredFieldKey[] = [];
+    if (firstName.trim() === "") missing.push("firstName");
+    if (lastName.trim() === "") missing.push("lastName");
+    if (email.trim() === "") missing.push("email");
+    if (company.trim() === "") missing.push("company");
+    if (jobRole === "") missing.push("jobRole");
+    if (!agreed) missing.push("agreed");
+    return missing;
+  }, [firstName, lastName, email, company, jobRole, agreed]);
+
+  const flashMissingFields = useCallback(() => {
+    const missing = getMissingRequiredFields();
+    if (missing.length === 0) return;
+
+    if (missingPulseTimerRef.current) {
+      window.clearTimeout(missingPulseTimerRef.current);
+    }
+
+    const nextPulse: Partial<Record<RequiredFieldKey, boolean>> = {};
+    missing.forEach((field) => {
+      nextPulse[field] = true;
+    });
+    setMissingPulse(nextPulse);
+
+    missingPulseTimerRef.current = window.setTimeout(() => {
+      setMissingPulse({});
+      missingPulseTimerRef.current = null;
+    }, 850);
+  }, [getMissingRequiredFields]);
+
   const handleBotPassed = useCallback((token: string) => {
     console.log("[turnstile] passed, waiting for Open contact form");
     setTurnstileToken(token);
   }, []);
 
   const submitContact = async () => {
-    if (sending || sendOk || !canSend) return;
+    if (sending || sendOk) return;
+    if (!canSend) {
+      flashMissingFields();
+      return;
+    }
     setSendError("");
     setSending(true);
     const controller = new AbortController();
@@ -649,14 +689,26 @@ export function ContactFlow() {
     }
   };
 
+  useEffect(() => {
+    return () => {
+      if (missingPulseTimerRef.current) {
+        window.clearTimeout(missingPulseTimerRef.current);
+      }
+    };
+  }, []);
+
   return (
     <div className="relative flex h-[440px] flex-col overflow-hidden border border-white/12 bg-white/[0.02] p-6 sm:h-[460px] sm:p-8">
       <div className="mb-4 flex h-6 shrink-0 items-center">
-        {step === "bot" ? (
+        {step === "reason" || step === "bot" ? (
           <button
             type="button"
             onClick={() => {
-              setTurnstileToken("");
+              if (step === "bot") {
+                setTurnstileToken("");
+                setStep("reason");
+                return;
+              }
               setStep("start");
             }}
             className="inline-flex items-center text-sm text-zinc-400 hover:text-white"
@@ -671,13 +723,40 @@ export function ContactFlow() {
         {step === "start" ? (
           <button
             type="button"
-            onClick={() => setStep("bot")}
+            onClick={() => setStep("reason")}
             className="flex h-full w-full flex-col items-center justify-center gap-3 border border-white/20 bg-white text-black transition-colors hover:bg-zinc-200"
           >
             <Mail className="h-8 w-8" />
             <span className="text-3xl font-semibold tracking-tight">Get started</span>
             <span className="text-sm text-zinc-600">Contact form</span>
           </button>
+        ) : null}
+
+        {step === "reason" ? (
+          <div>
+            <h3 className="mb-2 text-2xl font-semibold text-white">What brings you here?</h3>
+            <p className="mb-6 text-sm text-zinc-400">Choose one before continuing.</p>
+            <div className="grid gap-3">
+              {REASONS.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => {
+                    setReason(item.id);
+                    setStep("bot");
+                  }}
+                  className={`border px-4 py-4 text-left transition-colors ${
+                    reason === item.id
+                      ? "border-white bg-white/10 text-white"
+                      : "border-white/15 text-zinc-200 hover:border-white/40"
+                  }`}
+                >
+                  <span className="block font-semibold">{item.label}</span>
+                  <span className="mt-1 block text-sm text-zinc-400">{item.hint}</span>
+                </button>
+              ))}
+            </div>
+          </div>
         ) : null}
 
         {step === "bot" ? (
@@ -718,7 +797,7 @@ export function ContactFlow() {
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby="contact-form-title"
-                className="relative z-10 flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-blue-200/20 bg-[#0a1335]"
+                className="relative z-10 flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-white/[0.12] bg-surface-elevated"
               >
                 <div className="flex items-center justify-between border-b border-white/10 px-5 py-4 sm:px-6">
                   <h2 id="contact-form-title" className="text-xl font-semibold text-white">
@@ -731,12 +810,13 @@ export function ContactFlow() {
 
                 {sendOk ? (
                   <div className="px-5 py-16 text-center sm:px-6">
-                    <p className="mb-2 text-sm uppercase tracking-[0.14em] text-zinc-500">Sent</p>
-                    <p className="text-2xl font-semibold text-white">Message sent. We'll get back to you.</p>
+                    <p className="mb-2 text-sm uppercase tracking-[0.14em] text-zinc-500">Almost done</p>
+                    <p className="text-2xl font-semibold text-white">Check your email to confirm your inquiry.</p>
+                    <p className="mt-3 text-sm text-zinc-400">The link expires in 5 minutes.</p>
                   </div>
                 ) : (
                   <form
-                    className="overflow-y-auto bg-[#0e1f4f]/65 px-5 py-5 sm:px-6"
+                    className="overflow-y-auto bg-surface-deep/80 px-5 py-5 sm:px-6"
                     onSubmit={(event) => {
                       event.preventDefault();
                       void submitContact();
@@ -751,25 +831,9 @@ export function ContactFlow() {
                       aria-hidden="true"
                     />
 
-                    <div className="mb-4">
-                      <label className={labelClass} htmlFor="inquiry-reason">
-                        Select reasons of inquiry *
-                      </label>
-                      <select
-                        id="inquiry-reason"
-                        required
-                        value={reason}
-                        onChange={(event) => setReason(event.target.value as ContactReason | "")}
-                        className={fieldClass}
-                      >
-                        <option value="">Please Select</option>
-                        {REASONS.map((item) => (
-                          <option key={item.id} value={item.id}>
-                            {item.label}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+                    <p className="mb-5 text-xs uppercase tracking-[0.14em] text-zinc-500">
+                      {reasonLabel(reason)}
+                    </p>
 
                     <div className="mb-4">
                       <label className={labelClass} htmlFor="hear-about">
@@ -800,7 +864,9 @@ export function ContactFlow() {
                           required
                           value={firstName}
                           onChange={(event) => setFirstName(event.target.value)}
-                          className={fieldClass}
+                          className={`${fieldClass} ${
+                            missingPulse.firstName ? "border-red-400 shadow-[0_0_0_2px_rgba(248,113,113,0.30)]" : ""
+                          }`}
                         />
                       </div>
                       <div>
@@ -812,7 +878,9 @@ export function ContactFlow() {
                           required
                           value={lastName}
                           onChange={(event) => setLastName(event.target.value)}
-                          className={fieldClass}
+                          className={`${fieldClass} ${
+                            missingPulse.lastName ? "border-red-400 shadow-[0_0_0_2px_rgba(248,113,113,0.30)]" : ""
+                          }`}
                         />
                       </div>
                     </div>
@@ -828,7 +896,9 @@ export function ContactFlow() {
                           required
                           value={email}
                           onChange={(event) => setEmail(event.target.value)}
-                          className={fieldClass}
+                          className={`${fieldClass} ${
+                            missingPulse.email ? "border-red-400 shadow-[0_0_0_2px_rgba(248,113,113,0.30)]" : ""
+                          }`}
                         />
                       </div>
                       <div>
@@ -855,7 +925,9 @@ export function ContactFlow() {
                           required
                           value={company}
                           onChange={(event) => setCompany(event.target.value)}
-                          className={fieldClass}
+                          className={`${fieldClass} ${
+                            missingPulse.company ? "border-red-400 shadow-[0_0_0_2px_rgba(248,113,113,0.30)]" : ""
+                          }`}
                         />
                       </div>
                       <div>
@@ -867,7 +939,9 @@ export function ContactFlow() {
                           required
                           value={jobRole}
                           onChange={(event) => setJobRole(event.target.value)}
-                          className={fieldClass}
+                          className={`${fieldClass} ${
+                            missingPulse.jobRole ? "border-red-400 shadow-[0_0_0_2px_rgba(248,113,113,0.30)]" : ""
+                          }`}
                         >
                           <option value="">Please Select</option>
                           {JOB_ROLES.map((item) => (
@@ -907,39 +981,62 @@ export function ContactFlow() {
                         value={message}
                         onChange={(event) => setMessage(event.target.value)}
                         rows={5}
-                        className="w-full rounded-lg border border-blue-200/25 bg-[#0b1a45] px-3 py-2 text-sm text-white outline-none placeholder:text-zinc-400"
+                        className="w-full rounded-lg border border-white/[0.12] bg-surface-deep px-3 py-2 text-sm text-white outline-none placeholder:text-white/50"
                       />
                     </div>
 
-                    <div className="mb-5 flex items-start gap-3 text-sm text-zinc-200">
-                      <input
-                        id="gdpr-agree"
-                        type="checkbox"
-                        checked={agreed}
-                        onChange={(event) => setAgreed(event.target.checked)}
-                        className="mt-1 h-4 w-4 shrink-0"
-                      />
-                      <span>
-                        <label htmlFor="gdpr-agree" className="cursor-pointer">
-                          I have read and agree to B-SoftPlats’s Privacy Policy. I consent to B-SoftPlats
-                          storing and using my submitted information to respond to my enquiry.
-                        </label>{" "}
-                        <button
-                          type="button"
-                          onClick={() => setShowTerms(true)}
-                          className="text-zinc-400 underline underline-offset-4 hover:text-white"
-                        >
-                          More information
-                        </button>
-                      </span>
+                    <div
+                      className={`mb-5 rounded-lg border p-3 text-sm text-white/90 ${
+                        missingPulse.agreed
+                          ? "border-red-400/70 bg-red-500/10"
+                          : "border-white/[0.12] bg-surface-elevated"
+                      }`}
+                    >
+                      <div className="flex items-start gap-3">
+                        <input
+                          id="gdpr-agree"
+                          type="checkbox"
+                          checked={agreed}
+                          onChange={(event) => setAgreed(event.target.checked)}
+                          className="mt-1 h-4 w-4 shrink-0 accent-brand-primary"
+                        />
+                        <span>
+                          <label htmlFor="gdpr-agree" className="cursor-pointer">
+                            I have read and agree to BSoftPlats’s Privacy Policy. I consent to BSoftPlats
+                            storing and using my submitted information to respond to my enquiry.
+                          </label>{" "}
+                          <button
+                            type="button"
+                            onClick={() => setShowTerms(true)}
+                            className="text-brand-primary underline underline-offset-4 hover:text-brand-primary-bright"
+                          >
+                            More information
+                          </button>
+                        </span>
+                      </div>
                     </div>
 
                     {sendError ? <p className="mb-4 text-sm text-red-400">{sendError}</p> : null}
 
-                    <Button type="submit" size="lg" className="rounded-full px-6" disabled={!canSend || sending}>
-                      {sending ? "Sending…" : "Send"}
-                      <Mail className="ml-2 h-4 w-4" />
-                    </Button>
+                    <div
+                      onMouseEnter={() => {
+                        if (!canSend && !sending) flashMissingFields();
+                      }}
+                      onFocusCapture={() => {
+                        if (!canSend && !sending) flashMissingFields();
+                      }}
+                    >
+                      <Button
+                        type="submit"
+                        size="lg"
+                        className={`rounded-full px-6 ${!canSend && !sending ? "cursor-not-allowed opacity-65" : ""}`}
+                        disabled={sending}
+                        aria-disabled={!canSend || sending}
+                      >
+                        {sending ? "Sending…" : "Send"}
+                        <Mail className="ml-2 h-4 w-4" />
+                      </Button>
+                    </div>
                   </form>
                 )}
               </div>

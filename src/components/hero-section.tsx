@@ -5,7 +5,7 @@ import { BackgroundPaths } from "@/components/ui/background-paths";
 import { cn } from "@/lib/utils";
 import logoWhiteNoBg from "@/images/logowhitenobg.png";
 
-const ROTATING_WORDS = ["softplats", "reliable", "fast", "scalable", "secure", "precise"];
+const ROTATING_WORDS = ["SoftPlats", "reliable", "fast", "scalable", "secure", "precise"];
 const HERO_B_LOGO_SRC = logoWhiteNoBg;
 
 export function HeroSection() {
@@ -23,7 +23,7 @@ export function HeroSection() {
   return (
     <section
       id="landing"
-      className="relative min-h-screen h-screen overflow-hidden bg-black bg-gradient-to-br from-black via-zinc-950 to-black"
+      className="relative min-h-screen h-screen overflow-hidden bg-canvas-dark"
     >
       <BackgroundPaths />
 

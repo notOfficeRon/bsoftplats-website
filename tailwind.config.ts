@@ -33,6 +33,20 @@ export default {
           800: "#0f1e35",
           700: "#152746",
         },
+        brand: {
+          primary: "var(--brand-primary)",
+          "primary-bright": "var(--brand-primary-bright)",
+          "primary-deep": "var(--brand-primary-deep)",
+        },
+        canvas: {
+          dark: "var(--canvas-dark)",
+          light: "var(--canvas-light)",
+        },
+        surface: {
+          deep: "var(--surface-deep)",
+          elevated: "var(--surface-elevated)",
+          soft: "var(--surface-soft)",
+        },
       },
       fontFamily: {
         sans: ["Inter", "system-ui", "sans-serif"],

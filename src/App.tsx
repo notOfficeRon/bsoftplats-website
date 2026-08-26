@@ -387,8 +387,10 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    document.body.classList.add("brand-atmosphere");
     document.body.classList.toggle("dev-blue-theme", deepBlueThemeEnabled);
     return () => {
+      document.body.classList.remove("brand-atmosphere");
       document.body.classList.remove("dev-blue-theme");
     };
   }, [deepBlueThemeEnabled]);
@@ -401,7 +403,7 @@ export default function App() {
         onToggleDeepBlueTheme={() => setDeepBlueThemeEnabled((enabled) => !enabled)}
       />
 
-      <main className="bg-black">
+      <main className="bg-transparent">
         <HeroSection />
 
         <section id="overview" className="border-y border-white/10 py-10 md:hidden">
@@ -453,7 +455,7 @@ export default function App() {
           </div>
         </section>
 
-        <section aria-label="Companies we worked with" className="border-y border-white/10 bg-black py-5">
+        <section aria-label="Companies we worked with" className="border-y border-white/10 bg-transparent py-5">
           <div className="mx-auto mb-3 max-w-6xl px-6 text-center">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white">
               Our Partners
@@ -486,7 +488,7 @@ export default function App() {
               <div
                 className={
                   deepBlueThemeEnabled
-                    ? "absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,transparent_35%,rgba(4,11,36,0.82)_100%)]"
+                    ? "absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,transparent_35%,rgba(11,16,32,0.82)_100%)]"
                     : "absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,transparent_35%,rgba(0,0,0,0.72)_100%)]"
                 }
               />
@@ -640,7 +642,7 @@ export default function App() {
                       </div>
                       <div className="h-[2px] w-full bg-zinc-300">
                         <div
-                          className="h-full bg-black"
+                          className="h-full bg-brand-primary"
                           style={{
                             width: isActive ? "100%" : "0%",
                             animation:
@@ -659,7 +661,7 @@ export default function App() {
             <div className="mt-6 text-center">
               <a
                 href="/stories"
-                className="text-sm font-semibold text-white underline underline-offset-4 hover:text-zinc-300"
+                className="text-sm font-semibold text-brand-primary underline underline-offset-4 hover:text-brand-primary-bright"
               >
                 Check out more
               </a>
@@ -684,19 +686,19 @@ export default function App() {
         </section>
       </main>
 
-      <footer className="relative min-h-[430px] overflow-hidden bg-black">
+      <footer className="relative min-h-[430px] overflow-hidden bg-transparent">
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[330px] sm:h-[380px] md:h-[430px]">
           <Globe className="absolute left-1/2 top-full w-[min(88vw,720px)] max-w-none -translate-x-1/2 -translate-y-[58%] overflow-hidden rounded-full opacity-90" />
           <div
             className={
               deepBlueThemeEnabled
-                ? "absolute inset-0 bg-[radial-gradient(circle_at_50%_92%,rgba(168,199,255,0.16),rgba(4,11,36,0.9)_55%,rgba(3,7,24,1)_80%)]"
+                ? "absolute inset-0 bg-[radial-gradient(circle_at_50%_92%,rgba(111,125,246,0.16),rgba(11,16,32,0.9)_55%,rgba(11,16,32,1)_80%)]"
                 : "absolute inset-0 bg-[radial-gradient(circle_at_50%_92%,rgba(255,255,255,0.1),rgba(5,5,5,0.88)_55%,rgba(0,0,0,1)_80%)]"
             }
           />
         </div>
         <div className="absolute inset-x-0 bottom-0 z-10 py-6 text-center text-sm text-zinc-500">
-          &copy; B-SoftPlats
+          &copy; BSoftPlats
         </div>
       </footer>
     </>

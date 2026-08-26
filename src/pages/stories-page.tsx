@@ -13,15 +13,17 @@ const STORIES = (() => {
 
 export function StoriesPage() {
   const [showDevThemeToggle, setShowDevThemeToggle] = useState(false);
-  const [deepBlueThemeEnabled, setDeepBlueThemeEnabled] = useState(false);
+  const [deepBlueThemeEnabled, setDeepBlueThemeEnabled] = useState(true);
 
   useEffect(() => {
     setShowDevThemeToggle(window.location.pathname.startsWith("/dev"));
   }, []);
 
   useEffect(() => {
+    document.body.classList.add("brand-atmosphere");
     document.body.classList.toggle("dev-blue-theme", deepBlueThemeEnabled);
     return () => {
+      document.body.classList.remove("brand-atmosphere");
       document.body.classList.remove("dev-blue-theme");
     };
   }, [deepBlueThemeEnabled]);
@@ -34,7 +36,7 @@ export function StoriesPage() {
         onToggleDeepBlueTheme={() => setDeepBlueThemeEnabled((enabled) => !enabled)}
       />
       <StoriesErrorBoundary>
-        <main className="min-h-screen bg-black pt-28 pb-24">
+        <main className="min-h-screen bg-transparent pt-28 pb-24">
           <div className="mx-auto max-w-6xl px-6">
             <a
               href="/#success-stories"
