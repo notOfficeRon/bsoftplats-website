@@ -103,7 +103,7 @@ export function SiteHeader({
               <span className="hidden sm:inline">Deep Blue</span>
             </button>
           ) : null}
-          <a href={linkPrefix || "#landing"}>
+          <a href={linkPrefix || "#landing"} className="flex items-center gap-2">
             <img
               src={LOGO_SRC}
               alt="BSoftPlats logo"
@@ -112,6 +112,15 @@ export function SiteHeader({
                 event.currentTarget.src = LOGO_FALLBACK_SRC;
               }}
             />
+            <span
+              className={cn(
+                "text-base font-semibold tracking-tight text-white transition-all duration-200",
+                scrolled ? "max-w-[140px] opacity-100" : "max-w-0 opacity-0",
+              )}
+              aria-hidden={!scrolled}
+            >
+              softplats
+            </span>
           </a>
         </div>
       </div>
