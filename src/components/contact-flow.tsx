@@ -65,7 +65,7 @@ const COUNTRIES = [
 ] as const;
 
 const fieldClass =
-  "h-11 w-full border border-white/20 bg-black px-3 text-sm text-white outline-none placeholder:text-zinc-500";
+  "h-11 w-full rounded-lg border border-blue-200/25 bg-[#0b1a45] px-3 text-sm text-white outline-none placeholder:text-zinc-400";
 const labelClass = "mb-1.5 block text-xs font-semibold uppercase tracking-[0.12em] text-zinc-400";
 
 declare global {
@@ -608,10 +608,13 @@ export function ContactFlow() {
     if (sending || sendOk || !canSend) return;
     setSendError("");
     setSending(true);
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => controller.abort(), 20000);
     try {
       const response = await fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        signal: controller.signal,
         body: JSON.stringify({
           reason,
           hearAbout,
@@ -634,9 +637,14 @@ export function ContactFlow() {
         return;
       }
       setSendOk(true);
-    } catch {
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") {
+        setSendError("Send timed out. Please retry in a few seconds.");
+        return;
+      }
       setSendError("Could not send. Try again later.");
     } finally {
+      window.clearTimeout(timeoutId);
       setSending(false);
     }
   };
@@ -702,7 +710,7 @@ export function ContactFlow() {
             <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 sm:p-8">
               <button
                 type="button"
-                className="absolute inset-0 bg-black/80"
+                className="absolute inset-0 bg-black/55 backdrop-blur-[1px]"
                 aria-label="Close contact form"
                 onClick={closeForm}
               />
@@ -710,7 +718,7 @@ export function ContactFlow() {
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby="contact-form-title"
-                className="relative z-10 flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden border border-white/15 bg-zinc-950"
+                className="relative z-10 flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-blue-200/20 bg-[#0a1335]"
               >
                 <div className="flex items-center justify-between border-b border-white/10 px-5 py-4 sm:px-6">
                   <h2 id="contact-form-title" className="text-xl font-semibold text-white">
@@ -728,7 +736,7 @@ export function ContactFlow() {
                   </div>
                 ) : (
                   <form
-                    className="overflow-y-auto px-5 py-5 sm:px-6"
+                    className="overflow-y-auto bg-[#0e1f4f]/65 px-5 py-5 sm:px-6"
                     onSubmit={(event) => {
                       event.preventDefault();
                       void submitContact();
@@ -899,7 +907,7 @@ export function ContactFlow() {
                         value={message}
                         onChange={(event) => setMessage(event.target.value)}
                         rows={5}
-                        className="w-full border border-white/20 bg-black px-3 py-2 text-sm text-white outline-none placeholder:text-zinc-500"
+                        className="w-full rounded-lg border border-blue-200/25 bg-[#0b1a45] px-3 py-2 text-sm text-white outline-none placeholder:text-zinc-400"
                       />
                     </div>
 
