@@ -107,15 +107,18 @@ export function SiteHeader({
             <img
               src={LOGO_SRC}
               alt="BSoftPlats logo"
-              className="h-8 w-8 object-contain sm:h-9 sm:w-9"
+              className={cn(
+                "object-contain transition-all duration-200",
+                scrolled ? "h-8 w-8 sm:h-9 sm:w-9" : "h-12 w-12 sm:h-14 sm:w-14",
+              )}
               onError={(event) => {
                 event.currentTarget.src = LOGO_FALLBACK_SRC;
               }}
             />
             <span
               className={cn(
-                "-ml-1.5 overflow-hidden whitespace-nowrap text-2xl font-semibold leading-none tracking-tight text-white transition-all duration-200 sm:-ml-2",
-                scrolled ? "max-w-[180px] opacity-100" : "max-w-0 opacity-0",
+                "overflow-hidden whitespace-nowrap text-2xl font-semibold leading-none tracking-tight text-white transition-all duration-200",
+                scrolled ? "-ml-1.5 max-w-[180px] opacity-100 sm:-ml-2" : "ml-0 max-w-0 opacity-0",
               )}
               aria-hidden={!scrolled}
             >
