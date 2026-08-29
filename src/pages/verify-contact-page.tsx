@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 type VerifyState = "loading" | "success" | "error" | "missing" | "need-resume";
 
 const RESUME_STORAGE_PREFIX = "bsoftplats-resume-";
+const VERIFIED_STORAGE_PREFIX = "bsoftplats-verified-";
 const RESUME_MAX_BYTES = 2 * 1024 * 1024;
 
 function peekJwtPayload(token: string): { reason?: string; jti?: string } | null {
@@ -14,6 +15,29 @@ function peekJwtPayload(token: string): { reason?: string; jti?: string } | null
     return JSON.parse(atob(padded + pad)) as { reason?: string; jti?: string };
   } catch {
     return null;
+  }
+}
+
+function verifiedKey(token: string, jti?: string) {
+  return `${VERIFIED_STORAGE_PREFIX}${jti || token.slice(-48)}`;
+}
+
+function readVerified(token: string, jti?: string) {
+  try {
+    const raw = window.sessionStorage.getItem(verifiedKey(token, jti));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { message?: string };
+    return parsed.message || "Your request has already been confirmed.";
+  } catch {
+    return null;
+  }
+}
+
+function writeVerified(token: string, message: string, jti?: string) {
+  try {
+    window.sessionStorage.setItem(verifiedKey(token, jti), JSON.stringify({ message }));
+  } catch {
+    // ignore quota
   }
 }
 
@@ -60,9 +84,17 @@ export function VerifyContactPage() {
     setToken(nextToken);
 
     const peeked = peekJwtPayload(nextToken);
+    const nextJti = peeked?.jti ?? "";
+    if (nextJti) setJti(nextJti);
+
+    const already = readVerified(nextToken, nextJti);
+    if (already) {
+      setState("success");
+      setMessage(already);
+      return;
+    }
+
     if (peeked?.reason === "apply") {
-      const nextJti = peeked.jti ?? "";
-      setJti(nextJti);
       const stored = nextJti ? readStoredResume(nextJti) : null;
       if (!stored) {
         setState("need-resume");
@@ -83,8 +115,10 @@ export function VerifyContactPage() {
         });
         const data = (await response.json()) as { ok?: boolean; message?: string };
         if (response.ok && data.ok) {
+          const successMessage = data.message || "Your inquiry has been confirmed and sent.";
+          writeVerified(nextToken, successMessage, nextJti);
           setState("success");
-          setMessage(data.message || "Your inquiry has been confirmed and sent.");
+          setMessage(successMessage);
           return;
         }
         setState("error");
@@ -127,12 +161,12 @@ export function VerifyContactPage() {
       });
       const data = (await response.json()) as { ok?: boolean; message?: string };
       if (response.ok && data.ok) {
-        if (jti || peekJwtPayload(nextToken)?.jti) {
-          const key = peekJwtPayload(nextToken)?.jti;
-          if (key) window.localStorage.removeItem(`${RESUME_STORAGE_PREFIX}${key}`);
-        }
+        const key = peekJwtPayload(nextToken)?.jti;
+        if (key) window.localStorage.removeItem(`${RESUME_STORAGE_PREFIX}${key}`);
+        const successMessage = data.message || "Your application has been confirmed and sent.";
+        writeVerified(nextToken, successMessage, key);
         setState("success");
-        setMessage(data.message || "Your application has been confirmed and sent.");
+        setMessage(successMessage);
         return;
       }
       if (response.status === 400 && (data.message ?? "").toLowerCase().includes("resume")) {

@@ -6,6 +6,7 @@ import {
   isYesNo,
   signInquiryToken,
   sendResendEmail,
+  confirmEmailHtml,
   str,
   SUBJECT,
   validateBusinessEmailWithMx,
@@ -151,19 +152,20 @@ export async function POST(request: Request) {
   const verifyEmail = await sendResendEmail({
     to: email,
     subject: reason === "apply" ? "Confirm your BSoftPlats application" : "Confirm your BSoftPlats inquiry",
+    html: confirmEmailHtml({
+      firstName,
+      actionLabel: subjectLabel.toLowerCase(),
+      verifyUrl,
+      sameDeviceNote: reason === "apply",
+    }),
     text: [
       `Hi ${firstName},`,
       "",
-      `Please confirm your ${subjectLabel.toLowerCase()} by clicking the link below:`,
-      "",
-      verifyUrl,
+      `Please confirm your ${subjectLabel.toLowerCase()} using the Confirm button in this email.`,
       "",
       "This link expires in 5 minutes.",
       ...(reason === "apply"
-        ? [
-            "",
-            "Open the link on the same device and browser you used to apply, so your resume can be attached.",
-          ]
+        ? ["", "Open it on the same device and browser you used to apply, so your resume can be attached."]
         : []),
       "",
       "If you did not submit this request, you can ignore this email.",

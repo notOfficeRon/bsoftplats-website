@@ -267,10 +267,41 @@ export function formatInquiryText(payload: InquiryPayload) {
   return lines.join("\n");
 }
 
+export function confirmEmailHtml(input: {
+  firstName: string;
+  actionLabel: string;
+  verifyUrl: string;
+  sameDeviceNote?: boolean;
+}) {
+  const name = input.firstName
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+  const note = input.sameDeviceNote
+    ? `<p style="color:#9ca3af;font-size:14px;line-height:1.5;">Open this on the same device and browser you used to apply, so your resume can be attached.</p>`
+    : "";
+  return `<!doctype html>
+<html>
+  <body style="margin:0;padding:32px;background:#0b1020;font-family:Inter,Segoe UI,sans-serif;color:#f4f4f5;">
+    <p style="font-size:16px;">Hi ${name},</p>
+    <p style="font-size:16px;line-height:1.5;">Please confirm your ${input.actionLabel}.</p>
+    <p style="margin:28px 0;">
+      <a href="${input.verifyUrl}" style="display:inline-block;background:#6f7df6;color:#0b1020;text-decoration:none;font-weight:600;padding:12px 22px;border-radius:999px;">
+        Confirm
+      </a>
+    </p>
+    <p style="color:#9ca3af;font-size:14px;">This link expires in 5 minutes.</p>
+    ${note}
+    <p style="color:#9ca3af;font-size:14px;">If you did not submit this request, you can ignore this email.</p>
+  </body>
+</html>`;
+}
+
 export async function sendResendEmail(input: {
   to: string;
   subject: string;
   text: string;
+  html?: string;
   replyTo?: string;
   attachments?: { filename: string; content: string }[];
 }) {
@@ -295,6 +326,7 @@ export async function sendResendEmail(input: {
         reply_to: input.replyTo,
         subject: input.subject,
         text: input.text,
+        html: input.html,
         attachments: input.attachments,
       }),
       signal: controller.signal,
