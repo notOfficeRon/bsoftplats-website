@@ -1,4 +1,4 @@
-title: The first featured story
-link: https://www.linkedin.com/in/elia-terman-3a940137/
-description: We show the first release here.
-image mode: black and white
+title: Wrong numbers were hiding real cloud waste
+link: /wrong-numbers-were-hiding-real-cloud-waste
+description: How we fixed a global IoT provider's dashboards, and found real savings underneath.
+image mode: normal

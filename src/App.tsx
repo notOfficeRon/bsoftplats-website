@@ -603,12 +603,16 @@ export default function App() {
                 {SUCCESS_STORIES.map((story, index) => {
                   const isActive = index === activeStoryIndex;
                   return (
-                    <div key={story.title}>
-                      <div className="mb-1 flex justify-between text-[11px] uppercase tracking-[0.14em] text-zinc-600">
-                        <span className="hidden sm:inline">{story.title}</span>
-                        <span className="sm:hidden">Story {index + 1}</span>
+                    <div key={story.title} className="flex flex-col">
+                      <div className="mb-1 hidden h-10 sm:block">
+                        <span className="line-clamp-2 text-[11px] uppercase leading-5 tracking-[0.14em] text-zinc-600">
+                          {story.title}
+                        </span>
                       </div>
-                      <div className="h-[2px] w-full bg-zinc-300">
+                      <div className="mb-1 sm:hidden">
+                        <span className="text-[11px] uppercase tracking-[0.14em] text-zinc-600">Story {index + 1}</span>
+                      </div>
+                      <div className="mt-auto h-[2px] w-full bg-zinc-300">
                         <div
                           className="h-full bg-brand-primary"
                           style={{

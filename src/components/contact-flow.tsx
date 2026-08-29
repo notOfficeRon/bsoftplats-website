@@ -12,7 +12,81 @@ const REASONS = [
 ] as const;
 
 type ContactReason = (typeof REASONS)[number]["id"];
-type RequiredFieldKey = "firstName" | "lastName" | "email" | "company" | "jobRole" | "agreed";
+type FormModalStep = "reason" | "details" | "questions" | "resume" | "submit";
+type YesNo = "yes" | "no";
+type RequiredFieldKey =
+  | "firstName"
+  | "lastName"
+  | "email"
+  | "company"
+  | "jobRole"
+  | "hearAbout"
+  | "phone"
+  | "country"
+  | "message"
+  | "agreed"
+  | "workEu"
+  | "workIsrael"
+  | "urgent"
+  | "resume";
+
+const RESUME_MAX_BYTES = 2 * 1024 * 1024;
+const RESUME_STORAGE_PREFIX = "bsoftplats-resume-";
+
+type StoredResume = { name: string; type: string; content: string };
+
+function resumeStorageKey(jti: string) {
+  return `${RESUME_STORAGE_PREFIX}${jti}`;
+}
+
+function fileToStoredResume(file: File) {
+  return new Promise<StoredResume>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = String(reader.result ?? "");
+      const comma = result.indexOf(",");
+      resolve({
+        name: file.name,
+        type: file.type || "application/pdf",
+        content: comma >= 0 ? result.slice(comma + 1) : result,
+      });
+    };
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+}
+
+function YesNoRow({
+  label,
+  value,
+  onChange,
+  pulse,
+}: {
+  label: string;
+  value: YesNo | "";
+  onChange: (next: YesNo) => void;
+  pulse?: boolean;
+}) {
+  return (
+    <div className={`border p-4 ${pulse ? "border-red-400" : "border-white/15"}`}>
+      <p className="mb-3 text-sm font-medium text-white">{label}</p>
+      <div className="flex gap-2">
+        {(["yes", "no"] as const).map((option) => (
+          <button
+            key={option}
+            type="button"
+            onClick={() => onChange(option)}
+            className={`rounded-full px-4 py-1.5 text-sm ${
+              value === option ? "bg-white text-black" : "border border-white/20 text-zinc-200 hover:border-white/50"
+            }`}
+          >
+            {option === "yes" ? "Yes" : "No"}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 function reasonLabel(reason: ContactReason | "") {
   return REASONS.find((item) => item.id === reason)?.label ?? "";
@@ -211,14 +285,11 @@ function BotCheck({
 
 function PrivacyPolicyModal({ onClose }: { onClose: () => void }) {
   useEffect(() => {
-    const previous = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") onClose();
     };
     window.addEventListener("keydown", onKey);
     return () => {
-      document.body.style.overflow = previous;
       window.removeEventListener("keydown", onKey);
     };
   }, [onClose]);
@@ -553,9 +624,8 @@ function PrivacyPolicyModal({ onClose }: { onClose: () => void }) {
 }
 
 export function ContactFlow() {
-  const [step, setStep] = useState<"start" | "bot">("start");
   const [formOpen, setFormOpen] = useState(false);
-  const [formModalStep, setFormModalStep] = useState<"reason" | "details">("reason");
+  const [formModalStep, setFormModalStep] = useState<FormModalStep>("reason");
   const [turnstileToken, setTurnstileToken] = useState("");
   const [agreed, setAgreed] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
@@ -569,6 +639,11 @@ export function ContactFlow() {
   const [jobRole, setJobRole] = useState("");
   const [country, setCountry] = useState("");
   const [message, setMessage] = useState("");
+  const [workEu, setWorkEu] = useState<YesNo | "">("");
+  const [workIsrael, setWorkIsrael] = useState<YesNo | "">("");
+  const [urgent, setUrgent] = useState<YesNo | "">("");
+  const [resumeFile, setResumeFile] = useState<File | null>(null);
+  const [resumeError, setResumeError] = useState("");
   const [honeypot, setHoneypot] = useState("");
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState("");
@@ -578,43 +653,107 @@ export function ContactFlow() {
 
   const closeForm = useCallback(() => {
     setFormOpen(false);
+    setShowTerms(false);
     setSendOk(false);
     setSendError("");
+    setTurnstileToken("");
+    document.body.style.overflow = "";
   }, []);
 
+  const goBack = useCallback(() => {
+    if (formModalStep === "details") {
+      setFormModalStep("reason");
+      return;
+    }
+    if (formModalStep === "questions") {
+      setFormModalStep("details");
+      return;
+    }
+    if (formModalStep === "resume") {
+      setFormModalStep("questions");
+      return;
+    }
+    if (formModalStep === "submit") {
+      setTurnstileToken("");
+      setFormModalStep(reason === "apply" ? "resume" : "details");
+    }
+  }, [formModalStep, reason]);
+
   useEffect(() => {
-    if (!formOpen) return;
-    const previous = document.body.style.overflow;
+    if (!formOpen && !showTerms) {
+      document.body.style.overflow = "";
+      return;
+    }
     document.body.style.overflow = "hidden";
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape" && !showTerms) closeForm();
     };
     window.addEventListener("keydown", onKey);
     return () => {
-      document.body.style.overflow = previous;
       window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = "";
     };
   }, [formOpen, showTerms, closeForm]);
 
-  const canSend =
-    agreed &&
-    Boolean(reason) &&
+  const detailsReady =
     firstName.trim() !== "" &&
     lastName.trim() !== "" &&
     email.trim() !== "" &&
     company.trim() !== "" &&
-    jobRole !== "";
+    jobRole.trim() !== "" &&
+    (reason !== "apply" ||
+      (hearAbout.trim() !== "" && phone.trim() !== "" && country.trim() !== "" && message.trim() !== ""));
+
+  const questionsReady = workEu !== "" && workIsrael !== "" && urgent !== "";
+
+  const canSend =
+    agreed &&
+    Boolean(reason) &&
+    Boolean(turnstileToken) &&
+    detailsReady &&
+    (reason !== "apply" || (questionsReady && resumeFile !== null));
 
   const getMissingRequiredFields = useCallback((): RequiredFieldKey[] => {
     const missing: RequiredFieldKey[] = [];
-    if (firstName.trim() === "") missing.push("firstName");
-    if (lastName.trim() === "") missing.push("lastName");
-    if (email.trim() === "") missing.push("email");
-    if (company.trim() === "") missing.push("company");
-    if (jobRole === "") missing.push("jobRole");
-    if (!agreed) missing.push("agreed");
+    if (formModalStep === "details" || formModalStep === "submit") {
+      if (firstName.trim() === "") missing.push("firstName");
+      if (lastName.trim() === "") missing.push("lastName");
+      if (email.trim() === "") missing.push("email");
+      if (company.trim() === "") missing.push("company");
+      if (jobRole.trim() === "") missing.push("jobRole");
+      if (reason === "apply") {
+        if (hearAbout.trim() === "") missing.push("hearAbout");
+        if (phone.trim() === "") missing.push("phone");
+        if (country.trim() === "") missing.push("country");
+        if (message.trim() === "") missing.push("message");
+      }
+    }
+    if (formModalStep === "questions") {
+      if (workEu === "") missing.push("workEu");
+      if (workIsrael === "") missing.push("workIsrael");
+      if (urgent === "") missing.push("urgent");
+    }
+    if (formModalStep === "resume" && !resumeFile) missing.push("resume");
+    if (formModalStep === "submit" && !agreed) missing.push("agreed");
     return missing;
-  }, [firstName, lastName, email, company, jobRole, agreed]);
+  }, [
+    formModalStep,
+    reason,
+    firstName,
+    lastName,
+    email,
+    company,
+    jobRole,
+    hearAbout,
+    phone,
+    country,
+    message,
+    workEu,
+    workIsrael,
+    urgent,
+    resumeFile,
+    agreed,
+  ]);
 
   const flashMissingFields = useCallback(() => {
     const missing = getMissingRequiredFields();
@@ -637,9 +776,32 @@ export function ContactFlow() {
   }, [getMissingRequiredFields]);
 
   const handleBotPassed = useCallback((token: string) => {
-    console.log("[turnstile] passed, waiting for Open contact form");
     setTurnstileToken(token);
   }, []);
+
+  const pickResume = (file: File | null) => {
+    setResumeError("");
+    if (!file) {
+      setResumeFile(null);
+      return;
+    }
+    if (file.size > RESUME_MAX_BYTES) {
+      setResumeFile(null);
+      setResumeError("Resume must be 2MB or smaller.");
+      return;
+    }
+    const okType =
+      file.type === "application/pdf" ||
+      file.name.toLowerCase().endsWith(".pdf") ||
+      file.name.toLowerCase().endsWith(".doc") ||
+      file.name.toLowerCase().endsWith(".docx");
+    if (!okType) {
+      setResumeFile(null);
+      setResumeError("Please upload a PDF resume.");
+      return;
+    }
+    setResumeFile(file);
+  };
 
   const submitContact = async () => {
     if (sending || sendOk) return;
@@ -670,12 +832,23 @@ export function ContactFlow() {
           token: turnstileToken,
           agreed,
           website: honeypot,
+          ...(reason === "apply" ? { workEu, workIsrael, urgent } : {}),
         }),
       });
-      const data = (await response.json()) as { ok?: boolean; message?: string };
+      const data = (await response.json()) as { ok?: boolean; message?: string; jti?: string };
       if (!response.ok || !data.ok) {
         setSendError(data.message || "Could not send. Try again.");
         return;
+      }
+      if (reason === "apply" && resumeFile && data.jti) {
+        try {
+          const stored = await fileToStoredResume(resumeFile);
+          window.localStorage.setItem(resumeStorageKey(data.jti), JSON.stringify(stored));
+        } catch {
+          setSendError("Saved your application, but the resume could not be stored on this device. Re-upload it when you open the email link here.");
+          setSendOk(true);
+          return;
+        }
       }
       setSendOk(true);
     } catch (error) {
@@ -698,62 +871,31 @@ export function ContactFlow() {
     };
   }, []);
 
+  const modalTitle =
+    formModalStep === "reason"
+      ? "What brings you here?"
+      : formModalStep === "questions"
+        ? "A few questions"
+        : formModalStep === "resume"
+          ? "Resume"
+          : formModalStep === "submit"
+            ? "Confirm and send"
+            : "Contact form";
+
   return (
-    <div className="relative flex h-[440px] flex-col overflow-hidden border border-white/12 bg-white/[0.02] p-6 sm:h-[460px] sm:p-8">
-      <div className="mb-4 flex h-6 shrink-0 items-center">
-        {step === "bot" ? (
-          <button
-            type="button"
-            onClick={() => {
-              setTurnstileToken("");
-              setStep("start");
-            }}
-            className="inline-flex items-center text-sm text-zinc-400 hover:text-white"
-          >
-            <ChevronLeft className="mr-1 h-4 w-4" />
-            Back
-          </button>
-        ) : null}
-      </div>
-
-      <div className={`min-h-0 flex-1 ${step === "start" ? "flex overflow-hidden" : "overflow-y-auto"}`}>
-        {step === "start" ? (
-          <button
-            type="button"
-            onClick={() => setStep("bot")}
-            className="flex h-full w-full flex-col items-center justify-center gap-3 border border-white/20 bg-white text-black transition-colors hover:bg-zinc-200"
-          >
-            <Mail className="h-8 w-8" />
-            <span className="text-3xl font-semibold tracking-tight">Get started</span>
-            <span className="text-sm text-zinc-600">Contact form</span>
-          </button>
-        ) : null}
-
-        {step === "bot" ? (
-          <div>
-            <h3 className="mb-2 text-2xl font-semibold text-white">Quick bot check</h3>
-            <p className="mb-6 text-sm text-zinc-400">Verify you're human to open the contact form.</p>
-            {turnstileToken ? (
-              <div className="grid gap-4">
-                <p className="text-sm text-zinc-300">You're verified.</p>
-                <Button
-                  size="lg"
-                  className="w-fit rounded-full px-6"
-                  onClick={() => {
-                    console.log("[turnstile] opening contact overlay");
-                    setFormModalStep(reason ? "details" : "reason");
-                    setFormOpen(true);
-                  }}
-                >
-                  Open contact form
-                </Button>
-              </div>
-            ) : (
-              <BotCheck onPassed={handleBotPassed} />
-            )}
-          </div>
-        ) : null}
-      </div>
+    <div className="relative flex min-h-[280px] items-center justify-center sm:min-h-[300px]">
+      <button
+        type="button"
+        onClick={() => {
+          setFormModalStep("reason");
+          setFormOpen(true);
+        }}
+        className="flex w-full max-w-sm flex-col items-center justify-center gap-3 rounded-2xl bg-white px-10 py-12 text-black transition-colors hover:bg-zinc-200"
+      >
+        <Mail className="h-8 w-8" />
+        <span className="text-3xl font-semibold tracking-tight">Get started</span>
+        <span className="text-sm text-zinc-600">Contact form</span>
+      </button>
 
       {formOpen
         ? createPortal(
@@ -771,19 +913,19 @@ export function ContactFlow() {
                 className="relative z-10 flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-white/[0.12] bg-surface-elevated"
               >
                 <div className="flex items-center justify-between border-b border-white/10 px-5 py-4 sm:px-6">
-                  <div className="flex items-center gap-2">
-                    {formModalStep === "details" && !sendOk ? (
+                  <div className="flex min-w-0 items-center gap-2">
+                    {formModalStep !== "reason" && !sendOk ? (
                       <button
                         type="button"
-                        onClick={() => setFormModalStep("reason")}
-                        className="mr-1 inline-flex items-center text-sm text-zinc-400 hover:text-white"
+                        onClick={goBack}
+                        className="mr-1 inline-flex shrink-0 items-center text-sm text-zinc-400 hover:text-white"
                       >
                         <ChevronLeft className="mr-1 h-4 w-4" />
                         Back
                       </button>
                     ) : null}
-                    <h2 id="contact-form-title" className="text-xl font-semibold text-white">
-                      {formModalStep === "reason" ? "What brings you here?" : "Contact form"}
+                    <h2 id="contact-form-title" className="truncate text-xl font-semibold text-white">
+                      {modalTitle}
                     </h2>
                   </div>
                   <button type="button" onClick={closeForm} className="text-zinc-400 hover:text-white" aria-label="Close">
@@ -794,8 +936,17 @@ export function ContactFlow() {
                 {sendOk ? (
                   <div className="px-5 py-16 text-center sm:px-6">
                     <p className="mb-2 text-sm uppercase tracking-[0.14em] text-zinc-500">Almost done</p>
-                    <p className="text-2xl font-semibold text-white">Check your email to confirm your inquiry.</p>
+                    <p className="text-2xl font-semibold text-white">
+                      {reason === "apply"
+                        ? "Check your email to confirm your application."
+                        : "Check your email to confirm your inquiry."}
+                    </p>
                     <p className="mt-3 text-sm text-zinc-400">The link expires in 5 minutes.</p>
+                    {reason === "apply" ? (
+                      <p className="mt-3 text-sm text-zinc-400">
+                        Open it on this same device and browser so your resume can be attached.
+                      </p>
+                    ) : null}
                   </div>
                 ) : formModalStep === "reason" ? (
                   <div className="overflow-y-auto bg-surface-deep/80 px-5 py-5 sm:px-6">
@@ -821,12 +972,148 @@ export function ContactFlow() {
                       ))}
                     </div>
                   </div>
+                ) : formModalStep === "questions" ? (
+                  <div className="overflow-y-auto bg-surface-deep/80 px-5 py-5 sm:px-6">
+                    <div className="grid gap-3">
+                      <YesNoRow
+                        label="Are you allowed to work in the EU?"
+                        value={workEu}
+                        onChange={setWorkEu}
+                        pulse={missingPulse.workEu}
+                      />
+                      <YesNoRow
+                        label="Are you allowed to work in Israel?"
+                        value={workIsrael}
+                        onChange={setWorkIsrael}
+                        pulse={missingPulse.workIsrael}
+                      />
+                      <YesNoRow
+                        label="Are you able to fill a position urgently?"
+                        value={urgent}
+                        onChange={setUrgent}
+                        pulse={missingPulse.urgent}
+                      />
+                    </div>
+                    <Button
+                      size="lg"
+                      className="mt-6 rounded-full px-6"
+                      onClick={() => {
+                        if (!questionsReady) {
+                          flashMissingFields();
+                          return;
+                        }
+                        setFormModalStep("resume");
+                      }}
+                    >
+                      Next
+                    </Button>
+                  </div>
+                ) : formModalStep === "resume" ? (
+                  <div className="overflow-y-auto bg-surface-deep/80 px-5 py-5 sm:px-6">
+                    <label className={labelClass} htmlFor="resume-upload">
+                      Resume (PDF, max 2MB)
+                    </label>
+                    <input
+                      id="resume-upload"
+                      type="file"
+                      accept=".pdf,.doc,.docx,application/pdf"
+                      onChange={(event) => pickResume(event.target.files?.[0] ?? null)}
+                      className={`block w-full text-sm text-zinc-300 file:mr-4 file:rounded-full file:border-0 file:bg-white file:px-4 file:py-2 file:text-sm file:font-semibold file:text-black ${
+                        missingPulse.resume ? "rounded-lg ring-2 ring-red-400" : ""
+                      }`}
+                    />
+                    {resumeFile ? <p className="mt-3 text-sm text-zinc-300">{resumeFile.name}</p> : null}
+                    {resumeError ? <p className="mt-3 text-sm text-red-400">{resumeError}</p> : null}
+                    <p className="mt-4 text-sm text-zinc-500">
+                      You will need to confirm from this same device. If you open the email elsewhere, you can re-upload.
+                    </p>
+                    <Button
+                      size="lg"
+                      className="mt-6 rounded-full px-6"
+                      onClick={() => {
+                        if (!resumeFile) {
+                          flashMissingFields();
+                          return;
+                        }
+                        setFormModalStep("submit");
+                      }}
+                    >
+                      Next
+                    </Button>
+                  </div>
+                ) : formModalStep === "submit" ? (
+                  <div className="overflow-y-auto bg-surface-deep/80 px-5 py-5 sm:px-6">
+                    <p className="mb-4 text-xs uppercase tracking-[0.14em] text-zinc-500">{reasonLabel(reason)}</p>
+                    <div
+                      className={`mb-5 rounded-lg border p-3 text-sm text-white/90 ${
+                        missingPulse.agreed
+                          ? "border-red-400/70 bg-red-500/10"
+                          : "border-white/[0.12] bg-surface-elevated"
+                      }`}
+                    >
+                      <div className="flex items-start gap-3">
+                        <input
+                          id="gdpr-agree"
+                          type="checkbox"
+                          checked={agreed}
+                          onChange={(event) => setAgreed(event.target.checked)}
+                          className="mt-1 h-4 w-4 shrink-0 accent-brand-primary"
+                        />
+                        <span>
+                          <label htmlFor="gdpr-agree" className="cursor-pointer">
+                            I have read and agree to BSoftPlats’s Privacy Policy. I consent to BSoftPlats storing and
+                            using my submitted information to respond to my enquiry.
+                          </label>{" "}
+                          <button
+                            type="button"
+                            onClick={() => setShowTerms(true)}
+                            className="text-brand-primary underline underline-offset-4 hover:text-brand-primary-bright"
+                          >
+                            More information
+                          </button>
+                        </span>
+                      </div>
+                    </div>
+                    <p className="mb-3 text-sm text-zinc-400">Verify you are human, then send.</p>
+                    {turnstileToken ? (
+                      <p className="mb-4 text-sm text-zinc-300">You're verified.</p>
+                    ) : (
+                      <div className="mb-4">
+                        <BotCheck onPassed={handleBotPassed} />
+                      </div>
+                    )}
+                    {sendError ? <p className="mb-4 text-sm text-red-400">{sendError}</p> : null}
+                    <div
+                      onMouseEnter={() => {
+                        if (!canSend && !sending) flashMissingFields();
+                      }}
+                      onFocusCapture={() => {
+                        if (!canSend && !sending) flashMissingFields();
+                      }}
+                    >
+                      <Button
+                        type="button"
+                        size="lg"
+                        className={`rounded-full px-6 ${!canSend && !sending ? "cursor-not-allowed opacity-65" : ""}`}
+                        disabled={sending}
+                        aria-disabled={!canSend || sending}
+                        onClick={() => void submitContact()}
+                      >
+                        {sending ? "Sending…" : "Send"}
+                        <Mail className="ml-2 h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
                 ) : (
                   <form
                     className="overflow-y-auto bg-surface-deep/80 px-5 py-5 sm:px-6"
                     onSubmit={(event) => {
                       event.preventDefault();
-                      void submitContact();
+                      if (!detailsReady) {
+                        flashMissingFields();
+                        return;
+                      }
+                      setFormModalStep(reason === "apply" ? "questions" : "submit");
                     }}
                   >
                     <input
@@ -838,27 +1125,37 @@ export function ContactFlow() {
                       aria-hidden="true"
                     />
 
-                    <p className="mb-5 text-xs uppercase tracking-[0.14em] text-zinc-500">
-                      {reasonLabel(reason)}
-                    </p>
+                    <p className="mb-5 text-xs uppercase tracking-[0.14em] text-zinc-500">{reasonLabel(reason)}</p>
 
                     <div className="mb-4">
                       <label className={labelClass} htmlFor="hear-about">
-                        How did you hear about us?
+                        How did you hear about us?{reason === "apply" ? " *" : ""}
                       </label>
-                      <select
-                        id="hear-about"
-                        value={hearAbout}
-                        onChange={(event) => setHearAbout(event.target.value)}
-                        className={fieldClass}
-                      >
-                        <option value="">Please Select</option>
-                        {HEAR_ABOUT.map((item) => (
-                          <option key={item} value={item}>
-                            {item}
-                          </option>
-                        ))}
-                      </select>
+                      {reason === "apply" ? (
+                        <input
+                          id="hear-about"
+                          required
+                          value={hearAbout}
+                          onChange={(event) => setHearAbout(event.target.value)}
+                          className={`${fieldClass} ${
+                            missingPulse.hearAbout ? "border-red-400 shadow-[0_0_0_2px_rgba(248,113,113,0.30)]" : ""
+                          }`}
+                        />
+                      ) : (
+                        <select
+                          id="hear-about"
+                          value={hearAbout}
+                          onChange={(event) => setHearAbout(event.target.value)}
+                          className={fieldClass}
+                        >
+                          <option value="">Please Select</option>
+                          {HEAR_ABOUT.map((item) => (
+                            <option key={item} value={item}>
+                              {item}
+                            </option>
+                          ))}
+                        </select>
+                      )}
                     </div>
 
                     <div className="mb-4 grid gap-4 sm:grid-cols-2">
@@ -910,14 +1207,17 @@ export function ContactFlow() {
                       </div>
                       <div>
                         <label className={labelClass} htmlFor="phone">
-                          Phone number
+                          Phone number{reason === "apply" ? " *" : ""}
                         </label>
                         <input
                           id="phone"
                           type="tel"
+                          required={reason === "apply"}
                           value={phone}
                           onChange={(event) => setPhone(event.target.value)}
-                          className={fieldClass}
+                          className={`${fieldClass} ${
+                            missingPulse.phone ? "border-red-400 shadow-[0_0_0_2px_rgba(248,113,113,0.30)]" : ""
+                          }`}
                         />
                       </div>
                     </div>
@@ -941,109 +1241,87 @@ export function ContactFlow() {
                         <label className={labelClass} htmlFor="job-role">
                           Job Role *
                         </label>
-                        <select
-                          id="job-role"
-                          required
-                          value={jobRole}
-                          onChange={(event) => setJobRole(event.target.value)}
-                          className={`${fieldClass} ${
-                            missingPulse.jobRole ? "border-red-400 shadow-[0_0_0_2px_rgba(248,113,113,0.30)]" : ""
-                          }`}
-                        >
-                          <option value="">Please Select</option>
-                          {JOB_ROLES.map((item) => (
-                            <option key={item} value={item}>
-                              {item}
-                            </option>
-                          ))}
-                        </select>
+                        {reason === "apply" ? (
+                          <input
+                            id="job-role"
+                            required
+                            value={jobRole}
+                            onChange={(event) => setJobRole(event.target.value)}
+                            className={`${fieldClass} ${
+                              missingPulse.jobRole ? "border-red-400 shadow-[0_0_0_2px_rgba(248,113,113,0.30)]" : ""
+                            }`}
+                          />
+                        ) : (
+                          <select
+                            id="job-role"
+                            required
+                            value={jobRole}
+                            onChange={(event) => setJobRole(event.target.value)}
+                            className={`${fieldClass} ${
+                              missingPulse.jobRole ? "border-red-400 shadow-[0_0_0_2px_rgba(248,113,113,0.30)]" : ""
+                            }`}
+                          >
+                            <option value="">Please Select</option>
+                            {JOB_ROLES.map((item) => (
+                              <option key={item} value={item}>
+                                {item}
+                              </option>
+                            ))}
+                          </select>
+                        )}
                       </div>
                     </div>
 
                     <div className="mb-4">
                       <label className={labelClass} htmlFor="country">
-                        Country
+                        Country{reason === "apply" ? " *" : ""}
                       </label>
-                      <select
-                        id="country"
-                        value={country}
-                        onChange={(event) => setCountry(event.target.value)}
-                        className={fieldClass}
-                      >
-                        <option value="">Please Select</option>
-                        {COUNTRIES.map((item) => (
-                          <option key={item} value={item}>
-                            {item}
-                          </option>
-                        ))}
-                      </select>
+                      {reason === "apply" ? (
+                        <input
+                          id="country"
+                          required
+                          value={country}
+                          onChange={(event) => setCountry(event.target.value)}
+                          className={`${fieldClass} ${
+                            missingPulse.country ? "border-red-400 shadow-[0_0_0_2px_rgba(248,113,113,0.30)]" : ""
+                          }`}
+                        />
+                      ) : (
+                        <select
+                          id="country"
+                          value={country}
+                          onChange={(event) => setCountry(event.target.value)}
+                          className={fieldClass}
+                        >
+                          <option value="">Please Select</option>
+                          {COUNTRIES.map((item) => (
+                            <option key={item} value={item}>
+                              {item}
+                            </option>
+                          ))}
+                        </select>
+                      )}
                     </div>
 
                     <div className="mb-6">
                       <label className={labelClass} htmlFor="message">
-                        Message
+                        Message{reason === "apply" ? " *" : ""}
                       </label>
                       <textarea
                         id="message"
+                        required={reason === "apply"}
                         value={message}
                         onChange={(event) => setMessage(event.target.value)}
                         rows={5}
-                        className="w-full rounded-lg border border-white/[0.12] bg-surface-deep px-3 py-2 text-sm text-white outline-none placeholder:text-white/50"
+                        className={`w-full rounded-lg border border-white/[0.12] bg-surface-deep px-3 py-2 text-sm text-white outline-none placeholder:text-white/50 ${
+                          missingPulse.message ? "border-red-400 shadow-[0_0_0_2px_rgba(248,113,113,0.30)]" : ""
+                        }`}
                       />
                     </div>
 
-                    <div
-                      className={`mb-5 rounded-lg border p-3 text-sm text-white/90 ${
-                        missingPulse.agreed
-                          ? "border-red-400/70 bg-red-500/10"
-                          : "border-white/[0.12] bg-surface-elevated"
-                      }`}
-                    >
-                      <div className="flex items-start gap-3">
-                        <input
-                          id="gdpr-agree"
-                          type="checkbox"
-                          checked={agreed}
-                          onChange={(event) => setAgreed(event.target.checked)}
-                          className="mt-1 h-4 w-4 shrink-0 accent-brand-primary"
-                        />
-                        <span>
-                          <label htmlFor="gdpr-agree" className="cursor-pointer">
-                            I have read and agree to BSoftPlats’s Privacy Policy. I consent to BSoftPlats
-                            storing and using my submitted information to respond to my enquiry.
-                          </label>{" "}
-                          <button
-                            type="button"
-                            onClick={() => setShowTerms(true)}
-                            className="text-brand-primary underline underline-offset-4 hover:text-brand-primary-bright"
-                          >
-                            More information
-                          </button>
-                        </span>
-                      </div>
-                    </div>
-
-                    {sendError ? <p className="mb-4 text-sm text-red-400">{sendError}</p> : null}
-
-                    <div
-                      onMouseEnter={() => {
-                        if (!canSend && !sending) flashMissingFields();
-                      }}
-                      onFocusCapture={() => {
-                        if (!canSend && !sending) flashMissingFields();
-                      }}
-                    >
-                      <Button
-                        type="submit"
-                        size="lg"
-                        className={`rounded-full px-6 ${!canSend && !sending ? "cursor-not-allowed opacity-65" : ""}`}
-                        disabled={sending}
-                        aria-disabled={!canSend || sending}
-                      >
-                        {sending ? "Sending…" : "Send"}
-                        <Mail className="ml-2 h-4 w-4" />
-                      </Button>
-                    </div>
+                    <Button type="submit" size="lg" className="rounded-full px-6">
+                      Next
+                    </Button>
                   </form>
                 )}
               </div>

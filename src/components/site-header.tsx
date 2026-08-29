@@ -26,7 +26,7 @@ export function SiteHeader({
 
   useEffect(() => {
     const path = window.location.pathname.replace(/\/+$/, "") || "/";
-    setLinkPrefix(path === "/stories" ? "/" : "");
+    setLinkPrefix(path === "/" ? "" : "/");
   }, []);
 
   useEffect(() => {
@@ -103,19 +103,19 @@ export function SiteHeader({
               <span className="hidden sm:inline">Deep Blue</span>
             </button>
           ) : null}
-          <a href={linkPrefix || "#landing"} className="flex items-center gap-2">
+          <a href={linkPrefix || "#landing"} className="flex items-center gap-0">
             <img
               src={LOGO_SRC}
               alt="BSoftPlats logo"
-              className="h-14 w-14 object-contain"
+              className="h-8 w-8 object-contain sm:h-9 sm:w-9"
               onError={(event) => {
                 event.currentTarget.src = LOGO_FALLBACK_SRC;
               }}
             />
             <span
               className={cn(
-                "text-base font-semibold tracking-tight text-white transition-all duration-200",
-                scrolled ? "max-w-[140px] opacity-100" : "max-w-0 opacity-0",
+                "-ml-1.5 overflow-hidden whitespace-nowrap text-2xl font-semibold leading-none tracking-tight text-white transition-all duration-200 sm:-ml-2",
+                scrolled ? "max-w-[180px] opacity-100" : "max-w-0 opacity-0",
               )}
               aria-hidden={!scrolled}
             >

@@ -3,6 +3,7 @@ import {
   getSiteUrl,
   isEmail,
   isReason,
+  isYesNo,
   signInquiryToken,
   sendResendEmail,
   str,
@@ -26,6 +27,9 @@ type ContactRequest = {
   token?: string;
   agreed?: boolean;
   website?: string;
+  workEu?: string;
+  workIsrael?: string;
+  urgent?: string;
 };
 
 export async function POST(request: Request) {
@@ -75,7 +79,24 @@ export async function POST(request: Request) {
     return Response.json({ ok: false, message: "Please enter your company." }, { status: 400 });
   }
   if (jobRole.length < 1) {
-    return Response.json({ ok: false, message: "Please select your job role." }, { status: 400 });
+    return Response.json({ ok: false, message: "Please enter your job role." }, { status: 400 });
+  }
+  if (reason === "apply") {
+    if (hearAbout.length < 1) {
+      return Response.json({ ok: false, message: "Please tell us how you heard about us." }, { status: 400 });
+    }
+    if (phone.length < 1) {
+      return Response.json({ ok: false, message: "Please enter your phone number." }, { status: 400 });
+    }
+    if (country.length < 1) {
+      return Response.json({ ok: false, message: "Please enter your country." }, { status: 400 });
+    }
+    if (message.length < 1) {
+      return Response.json({ ok: false, message: "Please enter a message." }, { status: 400 });
+    }
+    if (!isYesNo(body.workEu) || !isYesNo(body.workIsrael) || !isYesNo(body.urgent)) {
+      return Response.json({ ok: false, message: "Please answer the application questions." }, { status: 400 });
+    }
   }
   if (!turnstileToken) {
     return Response.json({ ok: false, message: "Bot check expired. Go back and try again." }, { status: 400 });
@@ -118,15 +139,18 @@ export async function POST(request: Request) {
     country,
     hearAbout,
     message,
+    ...(reason === "apply" && isYesNo(body.workEu) && isYesNo(body.workIsrael) && isYesNo(body.urgent)
+      ? { workEu: body.workEu, workIsrael: body.workIsrael, urgent: body.urgent }
+      : {}),
   };
 
-  const jwt = signInquiryToken(inquiry, verifySecret);
+  const { token: jwt, jti } = signInquiryToken(inquiry, verifySecret);
   const verifyUrl = `${getSiteUrl()}/verify-contact?token=${encodeURIComponent(jwt)}`;
   const subjectLabel = SUBJECT[reason];
 
   const verifyEmail = await sendResendEmail({
     to: email,
-    subject: "Confirm your BSoftPlats inquiry",
+    subject: reason === "apply" ? "Confirm your BSoftPlats application" : "Confirm your BSoftPlats inquiry",
     text: [
       `Hi ${firstName},`,
       "",
@@ -135,6 +159,12 @@ export async function POST(request: Request) {
       verifyUrl,
       "",
       "This link expires in 5 minutes.",
+      ...(reason === "apply"
+        ? [
+            "",
+            "Open the link on the same device and browser you used to apply, so your resume can be attached.",
+          ]
+        : []),
       "",
       "If you did not submit this request, you can ignore this email.",
     ].join("\n"),
@@ -152,7 +182,11 @@ export async function POST(request: Request) {
   console.info("[contact] verification email sent", { requestId });
   return Response.json({
     ok: true,
-    message: "Check your email to confirm your inquiry (link expires in 5 minutes).",
+    jti,
+    message:
+      reason === "apply"
+        ? "Check your email to confirm your application (link expires in 5 minutes). Open it on this same device."
+        : "Check your email to confirm your inquiry (link expires in 5 minutes).",
   });
 }
 

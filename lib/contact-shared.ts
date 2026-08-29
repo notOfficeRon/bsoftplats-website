@@ -12,6 +12,8 @@ import { resolveMx } from "node:dns/promises";
 
 export type ContactReason = "business" | "apply";
 
+export type YesNo = "yes" | "no";
+
 export type InquiryPayload = {
   reason: ContactReason;
   firstName: string;
@@ -23,6 +25,9 @@ export type InquiryPayload = {
   country: string;
   hearAbout: string;
   message: string;
+  workEu?: YesNo;
+  workIsrael?: YesNo;
+  urgent?: YesNo;
 };
 
 export type SignedInquiryToken = InquiryPayload & {
@@ -91,6 +96,10 @@ export function isReason(value: unknown): value is ContactReason {
   return value === "business" || value === "apply";
 }
 
+export function isYesNo(value: unknown): value is YesNo {
+  return value === "yes" || value === "no";
+}
+
 export function isEmail(value: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 }
@@ -103,18 +112,19 @@ function base64url(input: Buffer | string) {
 export function signInquiryToken(payload: InquiryPayload, secret: string) {
   const header = { alg: "HS256", typ: "JWT" };
   const now = Math.floor(Date.now() / 1000);
+  const jti = randomBytes(16).toString("hex");
   const fullPayload: SignedInquiryToken = {
     ...payload,
     iat: now,
     exp: now + TOKEN_TTL_SECONDS,
-    jti: randomBytes(16).toString("hex"),
+    jti,
   };
   const headerB64 = base64url(JSON.stringify(header));
   const payloadB64 = base64url(JSON.stringify(fullPayload));
   const signature = createHmac("sha256", secret)
     .update(`${headerB64}.${payloadB64}`)
     .digest("base64url");
-  return `${headerB64}.${payloadB64}.${signature}`;
+  return { token: `${headerB64}.${payloadB64}.${signature}`, jti };
 }
 
 export function verifyInquiryToken(token: string, secret: string): SignedInquiryToken | null {
@@ -137,6 +147,9 @@ export function verifyInquiryToken(token: string, secret: string): SignedInquiry
   if (!isReason(payload.reason)) return null;
   if (typeof payload.exp !== "number" || payload.exp < Math.floor(Date.now() / 1000)) return null;
   if (!payload.email || !payload.firstName || !payload.lastName) return null;
+  if (payload.reason === "apply") {
+    if (!isYesNo(payload.workEu) || !isYesNo(payload.workIsrael) || !isYesNo(payload.urgent)) return null;
+  }
 
   return payload;
 }
@@ -233,7 +246,7 @@ export function getSiteUrl() {
 export function formatInquiryText(payload: InquiryPayload) {
   const name = `${payload.firstName} ${payload.lastName}`.trim();
   const subject = SUBJECT[payload.reason];
-  return [
+  const lines = [
     `Reason: ${subject}`,
     `Name: ${name}`,
     `Email: ${payload.email}`,
@@ -242,9 +255,16 @@ export function formatInquiryText(payload: InquiryPayload) {
     `Job role: ${payload.jobRole}`,
     `Country: ${payload.country || "—"}`,
     `How they heard: ${payload.hearAbout || "—"}`,
-    "",
-    payload.message || "(no message)",
-  ].join("\n");
+  ];
+  if (payload.reason === "apply") {
+    lines.push(
+      `Allowed to work in the EU: ${payload.workEu === "yes" ? "Yes" : "No"}`,
+      `Allowed to work in Israel: ${payload.workIsrael === "yes" ? "Yes" : "No"}`,
+      `Able to fill a position urgently: ${payload.urgent === "yes" ? "Yes" : "No"}`,
+    );
+  }
+  lines.push("", payload.message || "(no message)");
+  return lines.join("\n");
 }
 
 export async function sendResendEmail(input: {
@@ -252,6 +272,7 @@ export async function sendResendEmail(input: {
   subject: string;
   text: string;
   replyTo?: string;
+  attachments?: { filename: string; content: string }[];
 }) {
   const apiKey = process.env.RESEND_API_KEY;
   const fromEmail = process.env.CONTACT_FROM_EMAIL;
@@ -274,6 +295,7 @@ export async function sendResendEmail(input: {
         reply_to: input.replyTo,
         subject: input.subject,
         text: input.text,
+        attachments: input.attachments,
       }),
       signal: controller.signal,
     });
