@@ -7,14 +7,26 @@ import logoWhiteNoBg from "@/images/logowhitenobg.png";
 const LOGO_SRC = logoWhiteNoBg;
 const LOGO_FALLBACK_SRC = logoWhiteNoBg;
 
+export function PageOrbs() {
+  return (
+    <div className="page-orbs" aria-hidden="true">
+      <span className="page-orb page-orb-a" />
+      <span className="page-orb page-orb-b" />
+      <span className="page-orb page-orb-c" />
+    </div>
+  );
+}
+
 export function SiteHeader({
   showDevThemeToggle = false,
   deepBlueThemeEnabled = false,
   onToggleDeepBlueTheme,
+  showPageOrbs = false,
 }: {
   showDevThemeToggle?: boolean;
   deepBlueThemeEnabled?: boolean;
   onToggleDeepBlueTheme?: () => void;
+  showPageOrbs?: boolean;
 }) {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -58,6 +70,8 @@ export function SiteHeader({
   }, [servicesOpen]);
 
   return (
+    <>
+    {showPageOrbs ? <PageOrbs /> : null}
     <header
       className={cn(
         "fixed inset-x-0 top-0 z-50 h-[72px] transition-colors",
@@ -199,5 +213,6 @@ export function SiteHeader({
         </div>
       </div>
     </header>
+    </>
   );
 }

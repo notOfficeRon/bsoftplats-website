@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { PageOrbs } from "@/components/site-header";
 
 type VerifyState = "loading" | "success" | "error" | "missing" | "need-resume";
 
@@ -210,7 +211,9 @@ export function VerifyContactPage() {
   };
 
   return (
-    <main className="min-h-screen bg-transparent px-6 pt-16 pb-24">
+    <>
+    <PageOrbs />
+    <main className="relative z-10 min-h-screen bg-transparent px-6 pt-16 pb-24">
       <div className="mx-auto max-w-xl rounded-2xl border border-white/[0.12] bg-surface-elevated p-8 text-center">
         {state === "loading" || uploading ? (
           <>
@@ -259,5 +262,6 @@ export function VerifyContactPage() {
         </a>
       </div>
     </main>
+    </>
   );
 }

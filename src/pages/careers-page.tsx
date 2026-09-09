@@ -38,8 +38,9 @@ export function CareersPage() {
         showDevThemeToggle={showDevThemeToggle}
         deepBlueThemeEnabled={deepBlueThemeEnabled}
         onToggleDeepBlueTheme={() => setDeepBlueThemeEnabled((enabled) => !enabled)}
+        showPageOrbs
       />
-      <main className="min-h-screen bg-transparent pt-28 pb-24">
+      <main className="relative z-10 min-h-screen bg-transparent pt-28 pb-24">
         <div className="mx-auto max-w-6xl px-6">
           <a
             href="/#careers"
