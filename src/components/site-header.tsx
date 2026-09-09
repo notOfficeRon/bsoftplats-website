@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SERVICES, servicePath } from "@/lib/services";
@@ -20,6 +20,7 @@ export function SiteHeader({
   const [menuOpen, setMenuOpen] = useState(false);
   const [servicesOpen, setServicesOpen] = useState(false);
   const [linkPrefix, setLinkPrefix] = useState("");
+  const servicesMenuRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const path = window.location.pathname.replace(/\/+$/, "") || "/";
@@ -37,6 +38,24 @@ export function SiteHeader({
     setMenuOpen(false);
     setServicesOpen(false);
   };
+
+  useEffect(() => {
+    if (!servicesOpen) return;
+    const onPointerDown = (event: PointerEvent) => {
+      if (!servicesMenuRef.current?.contains(event.target as Node)) {
+        setServicesOpen(false);
+      }
+    };
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setServicesOpen(false);
+    };
+    window.addEventListener("pointerdown", onPointerDown);
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("pointerdown", onPointerDown);
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [servicesOpen]);
 
   return (
     <header
@@ -65,31 +84,22 @@ export function SiteHeader({
             About
           </a>
 
-          <div className="relative md:group">
-            <div className="flex items-center">
-              <a
-                href={`${linkPrefix}#services`}
-                className="rounded px-2 py-2 text-sm text-zinc-300 transition-colors hover:text-white md:p-0"
-                onClick={closeMenus}
-              >
-                Services
-              </a>
-              <button
-                type="button"
-                className="rounded p-2 text-zinc-300 hover:text-white md:hidden"
-                aria-expanded={servicesOpen}
-                aria-label="Open services menu"
-                onClick={() => setServicesOpen((open) => !open)}
-              >
-                <ChevronDown className={cn("h-4 w-4 transition-transform", servicesOpen && "rotate-180")} />
-              </button>
-            </div>
+          <div className="relative" ref={servicesMenuRef}>
+            <button
+              type="button"
+              className="flex items-center gap-1 rounded px-2 py-2 text-sm text-zinc-300 transition-colors hover:text-white md:p-0"
+              aria-expanded={servicesOpen}
+              aria-haspopup="true"
+              onClick={() => setServicesOpen((open) => !open)}
+            >
+              Services
+              <ChevronDown className={cn("h-4 w-4 transition-transform", servicesOpen && "rotate-180")} />
+            </button>
             <div
               className={cn(
                 "flex-col border border-white/10 py-2 md:absolute md:left-0 md:top-full md:z-50 md:min-w-[16rem] md:border",
                 deepBlueThemeEnabled ? "bg-surface-deep" : "bg-canvas-dark",
                 servicesOpen ? "flex" : "hidden",
-                "md:group-hover:flex md:group-focus-within:flex",
               )}
             >
               {SERVICES.map((service) => (
@@ -104,7 +114,7 @@ export function SiteHeader({
               ))}
               <a
                 href={`${linkPrefix}#services`}
-                className="px-4 py-2 text-sm text-zinc-400 hover:bg-white/5 hover:text-white md:hidden"
+                className="px-4 py-2 text-sm text-zinc-400 hover:bg-white/5 hover:text-white"
                 onClick={closeMenus}
               >
                 All services
