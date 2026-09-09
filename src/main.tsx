@@ -104,6 +104,16 @@ function seoForPath(path: string) {
     });
     return;
   }
+  if (path === "/spend-spikes-were-found-on-the-invoice") {
+    applySeo({
+      title: "Spend spikes in seconds. Finding out took days.",
+      description:
+        "Cloud and AI bills lived in five places, held together by a spreadsheet. We put every line on one pane, with a named owner. Days to find out became four hours.",
+      path,
+      type: "article",
+    });
+    return;
+  }
   if (path === "/verify-contact") {
     applySeo({
       title: "Confirm your request",

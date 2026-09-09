@@ -4,6 +4,7 @@ import { SiteHeader } from "@/components/site-header";
 
 const STORY_1_PATH = "/wrong-numbers-were-hiding-real-cloud-waste";
 const STORY_2_PATH = "/a-free-network-fix-ended-a-recurring-cost-spike";
+const STORY_3_PATH = "/spend-spikes-were-found-on-the-invoice";
 
 const CPU_ROWS = [
   { name: "Rating DB · Primary", cpus: 20, avg: 34, peak: 73, kind: "main" as const },
@@ -267,6 +268,60 @@ function Story2() {
   );
 }
 
+function Story3() {
+  return (
+    <>
+      <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-brand-primary">FinOps case study · 03</p>
+      <h1 className="mb-3 text-3xl font-semibold tracking-tight text-white sm:text-5xl">
+        Spend spikes in seconds. Finding out took days.
+      </h1>
+      <p className="mb-10 max-w-3xl text-base text-zinc-300 sm:text-lg">
+        Cloud and AI bills lived in five places, held together by a spreadsheet. We put every line on one pane, with a
+        named owner.
+      </p>
+
+      <div className="mb-10 grid gap-4 sm:grid-cols-2">
+        <article className="border border-white/12 bg-white/[0.03] p-5">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-brand-primary-bright">01 · The split</p>
+          <p className="text-sm leading-relaxed text-zinc-200">
+            AWS, Azure, OpenAI, Claude Code, Cursor. A spreadsheet pretending to be the source of truth.
+          </p>
+        </article>
+        <article className="border border-white/12 bg-white/[0.03] p-5">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-brand-primary-bright">02 · The delay</p>
+          <p className="text-sm leading-relaxed text-zinc-200">
+            A spike takes seconds (runaway agent, model switch, scale outside Terraform). Notice takes days. The invoice
+            lands; the money is already gone.
+          </p>
+        </article>
+        <article className="border border-white/12 bg-white/[0.03] p-5">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-brand-primary-bright">03 · No owner</p>
+          <p className="text-sm leading-relaxed text-zinc-200">
+            Ask who owns AI spend and you get silence, or five hands. Pieces have owners. The picture does not. No
+            picture, no alert, no fix.
+          </p>
+        </article>
+        <article className="border border-white/12 bg-white/[0.03] p-5">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-brand-primary-bright">
+            04 · What we put in place
+          </p>
+          <p className="text-sm leading-relaxed text-zinc-200">
+            One pane for every cloud and AI vendor, so a spike is visible when it starts. Every spend line has a named
+            owner; alerts go to that person; acting on them is part of the routine.
+          </p>
+        </article>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <Stat value="seconds" label="how long a spike takes" />
+        <Stat value="days" label="old time to find out" />
+        <Stat value="4 hours" label="detected, owned, and handled" accent />
+        <Stat value="one pane" label="every cloud and AI vendor" />
+      </div>
+    </>
+  );
+}
+
 export function StoryPage({ path }: { path: string }) {
   useEffect(() => {
     document.body.classList.add("brand-atmosphere", "dev-blue-theme");
@@ -289,10 +344,11 @@ export function StoryPage({ path }: { path: string }) {
           </a>
           {path === STORY_1_PATH ? <Story1 /> : null}
           {path === STORY_2_PATH ? <Story2 /> : null}
+          {path === STORY_3_PATH ? <Story3 /> : null}
         </div>
       </main>
     </>
   );
 }
 
-export const FEATURED_STORY_PATHS = [STORY_1_PATH, STORY_2_PATH];
+export const FEATURED_STORY_PATHS = [STORY_1_PATH, STORY_2_PATH, STORY_3_PATH];

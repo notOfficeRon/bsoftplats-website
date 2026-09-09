@@ -8,19 +8,19 @@ import { StoriesErrorBoundary, StoryCover, getFeaturedStories } from "@/lib/stor
 
 const WHAT_WE_DO_CARDS = [
   {
-    title: "DevOps at scale",
+    title: "People-first",
     description:
-      "CI/CD pipelines, infrastructure automation, and production-grade observability built to stay reliable under pressure.",
+      "We invest in talent growth and long-term careers. That’s the foundation of the work: stronger delivery, loyalty, and lasting value.",
   },
   {
-    title: "Fast delivery",
+    title: "Client partnerships",
     description:
-      "Lean execution loops and clear ownership so features ship quickly without sacrificing architecture quality.",
+      "When the team thrives, clients get better results. Full project transparency, with independent maintenance or ongoing support.",
   },
   {
-    title: "Product engineering",
+    title: "How we work today",
     description:
-      "From backend systems to polished frontend experiences, we build end-to-end software that works in real environments.",
+      "We currently serve four companies, with two strategic partnerships: one in banking, one in Generative AI.",
   },
 ];
 
@@ -46,19 +46,24 @@ const BUSINESS_PARTNERS = [
 
 const SERVICE_SCROLL_STEPS = [
   {
-    title: "DevOps Systems",
+    title: "DevSecOps & Cloud",
     description:
-      "We design resilient CI/CD flows, infrastructure-as-code, and runtime observability to keep delivery stable.",
+      "Stable, scalable infrastructure with monitoring built in for performance and security.",
   },
   {
-    title: "Fast Execution",
+    title: "Full-Stack Development",
     description:
-      "Short planning cycles and direct ownership let us move from roadmap to production quickly.",
+      "End-to-end development with full visibility, detailed documentation, and a clean handover.",
   },
   {
-    title: "Product Impact",
+    title: "AI Solutions",
     description:
-      "Engineering decisions are tied to outcomes: performance, reliability, and measurable business value.",
+      "Implementing cutting-edge Generative AI solutions through strategic collaborations to transform your business.",
+  },
+  {
+    title: "Talent Solutions",
+    description:
+      "Providing highly skilled professionals tailored to meet your specific business needs and technical requirements.",
   },
 ];
 
@@ -168,7 +173,8 @@ function ServicesScrollDemo() {
               Our Services
             </h3>
             <p className="mb-8 text-center text-sm text-zinc-400">
-              All service tracks are visible. Scroll to highlight each one.
+              Comprehensive solutions designed to meet your business needs with a focus on quality and
+              transparency.
             </p>
             <div className="space-y-4">
               {SERVICE_SCROLL_STEPS.map((step, index) => {
@@ -198,7 +204,7 @@ function ServicesScrollDemo() {
           </div>
         </div>
       </div>
-      <div className="relative z-0 min-h-[190vh] sm:min-h-[200vh]" />
+      <div className="relative z-0 min-h-[240vh] sm:min-h-[260vh]" />
     </div>
   );
 }
@@ -223,6 +229,8 @@ export default function App() {
     link: { delay: 0, duration: 280 },
   });
   const [activeArrow, setActiveArrow] = useState<"prev" | "next" | null>(null);
+  const [storiesInView, setStoriesInView] = useState(false);
+  const storiesSectionRef = useRef<HTMLElement | null>(null);
   const arrowTimerRef = useRef<number | null>(null);
   const storyTimersRef = useRef<number[]>([]);
   const isStoryTransitioningRef = useRef(false);
@@ -344,12 +352,27 @@ export default function App() {
   }, [clearStoryTimers]);
 
   useEffect(() => {
-    if (SUCCESS_STORIES.length === 0 || isStoryTransitioning) return;
+    const el = storiesSectionRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setStoriesInView(entry.isIntersecting);
+      },
+      { threshold: 0.35, rootMargin: "-15% 0px" },
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (SUCCESS_STORIES.length === 0 || isStoryTransitioning || !storiesInView) return;
     const autoTimer = window.setTimeout(() => {
       showNextStory();
     }, STORY_DURATION_MS);
     return () => window.clearTimeout(autoTimer);
-  }, [activeStoryIndex, isStoryTransitioning, showNextStory]);
+  }, [activeStoryIndex, isStoryTransitioning, showNextStory, storiesInView]);
 
   const partStyle = useCallback(
     (part: StoryPartKey): CSSProperties => ({
@@ -468,7 +491,8 @@ export default function App() {
                   Our Services
                 </h3>
                 <p className="mb-8 text-center text-sm text-zinc-400">
-                  Core tracks we deliver across product and platform work.
+                  Comprehensive solutions designed to meet your business needs with a focus on quality and
+                  transparency.
                 </p>
                 <div className="space-y-4">
                   {SERVICE_SCROLL_STEPS.map((step, index) => (
@@ -491,7 +515,11 @@ export default function App() {
         </section>
 
         <StoriesErrorBoundary>
-        <section id="success-stories" className="border-t border-white/10 py-20 sm:py-28">
+        <section
+          id="success-stories"
+          ref={storiesSectionRef}
+          className="border-t border-white/10 py-20 sm:py-28"
+        >
           <div className="mx-auto max-w-6xl px-6">
             <h2 className="mb-4 text-center text-3xl font-semibold tracking-tight text-white sm:mb-6 sm:text-4xl">
               Success Stories
@@ -618,7 +646,7 @@ export default function App() {
                           style={{
                             width: isActive ? "100%" : "0%",
                             animation:
-                              isActive && !isStoryTransitioning
+                              isActive && !isStoryTransitioning && storiesInView
                                 ? `story-progress ${STORY_DURATION_MS}ms linear forwards`
                                 : "none",
                           }}
@@ -633,7 +661,7 @@ export default function App() {
             <div className="mt-6 text-center">
               <a
                 href="/stories"
-                className="text-sm font-semibold text-brand-primary underline underline-offset-4 hover:text-brand-primary-bright"
+                className="inline-flex items-center justify-center rounded-2xl bg-white px-8 py-3 text-sm font-semibold text-black transition-colors hover:bg-zinc-200"
               >
                 Check out more
               </a>
