@@ -2,7 +2,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App";
 import { StoriesErrorBoundary } from "./lib/stories";
-import { StoriesPage } from "./pages/stories-page";
+import { CareersPage } from "./pages/careers-page";
 import { FEATURED_STORY_PATHS, StoryPage } from "./pages/story-page";
 import { VerifyContactPage } from "./pages/verify-contact-page";
 import ogImage from "./images/bsoftplatslogo.png";
@@ -84,6 +84,14 @@ function seoForPath(path: string) {
     });
     return;
   }
+  if (path === "/careers") {
+    applySeo({
+      title: "Careers",
+      description: "Open positions at BSoftPlats. Follow your passion. Find your place.",
+      path,
+    });
+    return;
+  }
   if (path === "/wrong-numbers-were-hiding-real-cloud-waste") {
     applySeo({
       title: "Wrong numbers were hiding real cloud waste",
@@ -141,6 +149,9 @@ function Root() {
           <StoriesPage />
         </StoriesErrorBoundary>
       );
+    }
+    if (path === "/careers") {
+      return <CareersPage />;
     }
     if (FEATURED_STORY_PATHS.includes(path as (typeof FEATURED_STORY_PATHS)[number])) {
       return <StoryPage path={path} />;

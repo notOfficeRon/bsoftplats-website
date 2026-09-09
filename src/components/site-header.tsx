@@ -6,6 +6,7 @@ const NAV_LINKS = [
   { href: "#about", label: "About" },
   { href: "#services", label: "Services" },
   { href: "#success-stories", label: "Success Stories" },
+  { href: "#careers", label: "Careers" },
 ];
 
 const LOGO_SRC = logoWhiteNoBg;

@@ -29,8 +29,10 @@ type ContactRequest = {
   agreed?: boolean;
   website?: string;
   workEu?: string;
-  workIsrael?: string;
   urgent?: string;
+  hoursOverlap?: string;
+  roleExperience?: string;
+  englishClients?: string;
 };
 
 export async function POST(request: Request) {
@@ -95,7 +97,13 @@ export async function POST(request: Request) {
     if (message.length < 1) {
       return Response.json({ ok: false, message: "Please enter a message." }, { status: 400 });
     }
-    if (!isYesNo(body.workEu) || !isYesNo(body.workIsrael) || !isYesNo(body.urgent)) {
+    if (
+      !isYesNo(body.workEu) ||
+      !isYesNo(body.urgent) ||
+      !isYesNo(body.hoursOverlap) ||
+      !isYesNo(body.roleExperience) ||
+      !isYesNo(body.englishClients)
+    ) {
       return Response.json({ ok: false, message: "Please answer the application questions." }, { status: 400 });
     }
   }
@@ -140,8 +148,19 @@ export async function POST(request: Request) {
     country,
     hearAbout,
     message,
-    ...(reason === "apply" && isYesNo(body.workEu) && isYesNo(body.workIsrael) && isYesNo(body.urgent)
-      ? { workEu: body.workEu, workIsrael: body.workIsrael, urgent: body.urgent }
+    ...(reason === "apply" &&
+    isYesNo(body.workEu) &&
+    isYesNo(body.urgent) &&
+    isYesNo(body.hoursOverlap) &&
+    isYesNo(body.roleExperience) &&
+    isYesNo(body.englishClients)
+      ? {
+          workEu: body.workEu,
+          urgent: body.urgent,
+          hoursOverlap: body.hoursOverlap,
+          roleExperience: body.roleExperience,
+          englishClients: body.englishClients,
+        }
       : {}),
   };
 

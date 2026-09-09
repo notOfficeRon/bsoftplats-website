@@ -26,8 +26,10 @@ export type InquiryPayload = {
   hearAbout: string;
   message: string;
   workEu?: YesNo;
-  workIsrael?: YesNo;
   urgent?: YesNo;
+  hoursOverlap?: YesNo;
+  roleExperience?: YesNo;
+  englishClients?: YesNo;
 };
 
 export type SignedInquiryToken = InquiryPayload & {
@@ -148,7 +150,15 @@ export function verifyInquiryToken(token: string, secret: string): SignedInquiry
   if (typeof payload.exp !== "number" || payload.exp < Math.floor(Date.now() / 1000)) return null;
   if (!payload.email || !payload.firstName || !payload.lastName) return null;
   if (payload.reason === "apply") {
-    if (!isYesNo(payload.workEu) || !isYesNo(payload.workIsrael) || !isYesNo(payload.urgent)) return null;
+    if (
+      !isYesNo(payload.workEu) ||
+      !isYesNo(payload.urgent) ||
+      !isYesNo(payload.hoursOverlap) ||
+      !isYesNo(payload.roleExperience) ||
+      !isYesNo(payload.englishClients)
+    ) {
+      return null;
+    }
   }
 
   return payload;
@@ -258,9 +268,11 @@ export function formatInquiryText(payload: InquiryPayload) {
   ];
   if (payload.reason === "apply") {
     lines.push(
-      `Allowed to work in the EU: ${payload.workEu === "yes" ? "Yes" : "No"}`,
-      `Allowed to work in Israel: ${payload.workIsrael === "yes" ? "Yes" : "No"}`,
+      `EU citizen: ${payload.workEu === "yes" ? "Yes" : "No"}`,
       `Able to fill a position urgently: ${payload.urgent === "yes" ? "Yes" : "No"}`,
+      `Overlapping hours with Israel and EU clients: ${payload.hoursOverlap === "yes" ? "Yes" : "No"}`,
+      `At least 4 years in this role: ${payload.roleExperience === "yes" ? "Yes" : "No"}`,
+      `Comfortable working in English with clients: ${payload.englishClients === "yes" ? "Yes" : "No"}`,
     );
   }
   lines.push("", payload.message || "(no message)");

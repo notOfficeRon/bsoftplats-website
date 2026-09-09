@@ -26,8 +26,10 @@ type RequiredFieldKey =
   | "message"
   | "agreed"
   | "workEu"
-  | "workIsrael"
   | "urgent"
+  | "hoursOverlap"
+  | "roleExperience"
+  | "englishClients"
   | "resume";
 
 const RESUME_MAX_BYTES = 2 * 1024 * 1024;
@@ -623,7 +625,13 @@ function PrivacyPolicyModal({ onClose }: { onClose: () => void }) {
   );
 }
 
-export function ContactFlow() {
+export function ContactFlow({
+  showTrigger = true,
+  applyOpeningTitle,
+}: {
+  showTrigger?: boolean;
+  applyOpeningTitle?: string;
+} = {}) {
   const [formOpen, setFormOpen] = useState(false);
   const [formModalStep, setFormModalStep] = useState<FormModalStep>("reason");
   const [turnstileToken, setTurnstileToken] = useState("");
@@ -640,8 +648,10 @@ export function ContactFlow() {
   const [country, setCountry] = useState("");
   const [message, setMessage] = useState("");
   const [workEu, setWorkEu] = useState<YesNo | "">("");
-  const [workIsrael, setWorkIsrael] = useState<YesNo | "">("");
   const [urgent, setUrgent] = useState<YesNo | "">("");
+  const [hoursOverlap, setHoursOverlap] = useState<YesNo | "">("");
+  const [roleExperience, setRoleExperience] = useState<YesNo | "">("");
+  const [englishClients, setEnglishClients] = useState<YesNo | "">("");
   const [resumeFile, setResumeFile] = useState<File | null>(null);
   const [resumeError, setResumeError] = useState("");
   const [honeypot, setHoneypot] = useState("");
@@ -650,6 +660,14 @@ export function ContactFlow() {
   const [sendOk, setSendOk] = useState(false);
   const [missingPulse, setMissingPulse] = useState<Partial<Record<RequiredFieldKey, boolean>>>({});
   const missingPulseTimerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (!applyOpeningTitle) return;
+    setReason("apply");
+    setJobRole(applyOpeningTitle);
+    setFormModalStep("details");
+    setFormOpen(true);
+  }, [applyOpeningTitle]);
 
   const closeForm = useCallback(() => {
     setFormOpen(false);
@@ -704,7 +722,12 @@ export function ContactFlow() {
     (reason !== "apply" ||
       (hearAbout.trim() !== "" && phone.trim() !== "" && country.trim() !== "" && message.trim() !== ""));
 
-  const questionsReady = workEu !== "" && workIsrael !== "" && urgent !== "";
+  const questionsReady =
+    workEu !== "" &&
+    urgent !== "" &&
+    hoursOverlap !== "" &&
+    roleExperience !== "" &&
+    englishClients !== "";
 
   const canSend =
     agreed &&
@@ -730,8 +753,10 @@ export function ContactFlow() {
     }
     if (formModalStep === "questions") {
       if (workEu === "") missing.push("workEu");
-      if (workIsrael === "") missing.push("workIsrael");
       if (urgent === "") missing.push("urgent");
+      if (hoursOverlap === "") missing.push("hoursOverlap");
+      if (roleExperience === "") missing.push("roleExperience");
+      if (englishClients === "") missing.push("englishClients");
     }
     if (formModalStep === "resume" && !resumeFile) missing.push("resume");
     if (formModalStep === "submit" && !agreed) missing.push("agreed");
@@ -749,8 +774,10 @@ export function ContactFlow() {
     country,
     message,
     workEu,
-    workIsrael,
     urgent,
+    hoursOverlap,
+    roleExperience,
+    englishClients,
     resumeFile,
     agreed,
   ]);
@@ -832,7 +859,9 @@ export function ContactFlow() {
           token: turnstileToken,
           agreed,
           website: honeypot,
-          ...(reason === "apply" ? { workEu, workIsrael, urgent } : {}),
+          ...(reason === "apply"
+            ? { workEu, urgent, hoursOverlap, roleExperience, englishClients }
+            : {}),
         }),
       });
       const data = (await response.json()) as { ok?: boolean; message?: string; jti?: string };
@@ -883,6 +912,8 @@ export function ContactFlow() {
             : "Contact form";
 
   return (
+    <>
+      {showTrigger ? (
     <div className="relative flex min-h-[280px] items-center justify-center sm:min-h-[300px]">
       <button
         type="button"
@@ -890,12 +921,14 @@ export function ContactFlow() {
           setFormModalStep("reason");
           setFormOpen(true);
         }}
-        className="flex w-full max-w-sm flex-col items-center justify-center gap-3 rounded-2xl bg-white px-10 py-12 text-black transition-colors hover:bg-zinc-200"
+        className="lift-hover flex w-full max-w-sm flex-col items-center justify-center gap-3 rounded-2xl bg-white px-10 py-12 text-black hover:bg-zinc-200"
       >
         <Mail className="h-8 w-8" />
         <span className="text-3xl font-semibold tracking-tight">Get started</span>
         <span className="text-sm text-zinc-600">Contact form</span>
       </button>
+    </div>
+      ) : null}
 
       {formOpen
         ? createPortal(
@@ -976,22 +1009,34 @@ export function ContactFlow() {
                   <div className="overflow-y-auto bg-surface-deep/80 px-5 py-5 sm:px-6">
                     <div className="grid gap-3">
                       <YesNoRow
-                        label="Are you allowed to work in the EU?"
+                        label="Are you an EU citizen?"
                         value={workEu}
                         onChange={setWorkEu}
                         pulse={missingPulse.workEu}
-                      />
-                      <YesNoRow
-                        label="Are you allowed to work in Israel?"
-                        value={workIsrael}
-                        onChange={setWorkIsrael}
-                        pulse={missingPulse.workIsrael}
                       />
                       <YesNoRow
                         label="Are you able to fill a position urgently?"
                         value={urgent}
                         onChange={setUrgent}
                         pulse={missingPulse.urgent}
+                      />
+                      <YesNoRow
+                        label="Can you work overlapping hours with Israel and EU clients?"
+                        value={hoursOverlap}
+                        onChange={setHoursOverlap}
+                        pulse={missingPulse.hoursOverlap}
+                      />
+                      <YesNoRow
+                        label="Do you have at least 4 years of experience in this role?"
+                        value={roleExperience}
+                        onChange={setRoleExperience}
+                        pulse={missingPulse.roleExperience}
+                      />
+                      <YesNoRow
+                        label="Are you comfortable working in English with clients?"
+                        value={englishClients}
+                        onChange={setEnglishClients}
+                        pulse={missingPulse.englishClients}
                       />
                     </div>
                     <Button
@@ -1331,6 +1376,6 @@ export function ContactFlow() {
         : null}
 
       {showTerms ? <PrivacyPolicyModal onClose={() => setShowTerms(false)} /> : null}
-    </div>
+    </>
   );
 }

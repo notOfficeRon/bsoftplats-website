@@ -1,4 +1,4 @@
-import type { CSSProperties } from "react";
+import { type CSSProperties, useLayoutEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 
 function FloatingPaths({ position }: { position: number }) {
@@ -48,20 +48,62 @@ function FloatingPaths({ position }: { position: number }) {
   );
 }
 
-export function BackgroundPaths({ className }: { className?: string }) {
+export function BackgroundPaths({
+  className,
+  reverse = false,
+}: {
+  className?: string;
+  reverse?: boolean;
+}) {
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const [inView, setInView] = useState(false);
+
+  useLayoutEffect(() => {
+    const el = rootRef.current;
+    if (!el) return;
+
+    const margin = Math.round(window.innerHeight * 0.35);
+    const sync = (visible: boolean) => {
+      setInView((current) => (current === visible ? current : visible));
+    };
+
+    const rect = el.getBoundingClientRect();
+    sync(rect.bottom > -margin && rect.top < window.innerHeight + margin);
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        sync(entry.isIntersecting);
+      },
+      { root: null, rootMargin: `${margin}px 0px`, threshold: 0 },
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <div
+      ref={rootRef}
       className={cn(
         "pointer-events-none absolute inset-0 z-0 h-full min-h-screen w-full overflow-hidden",
         className,
       )}
     >
-      <div className="hero-paths-layer pointer-events-none absolute inset-0">
-        <FloatingPaths position={1} />
-      </div>
-      <div className="hero-paths-layer pointer-events-none absolute inset-0">
-        <FloatingPaths position={-1} />
-      </div>
+      {inView ? (
+        <div
+          className={cn(
+            "pointer-events-none absolute inset-0 origin-center",
+            reverse && "scale-x-[-1]",
+          )}
+        >
+          <div className="hero-paths-layer pointer-events-none absolute inset-0">
+            <FloatingPaths position={1} />
+          </div>
+          <div className="hero-paths-layer pointer-events-none absolute inset-0">
+            <FloatingPaths position={-1} />
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

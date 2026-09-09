@@ -4,6 +4,7 @@ import { HeroSection } from "@/components/hero-section";
 import { SiteHeader } from "@/components/site-header";
 import { ContactFlow } from "@/components/contact-flow";
 import { Globe } from "@/components/ui/globe";
+import { BackgroundPaths } from "@/components/ui/background-paths";
 import { StoriesErrorBoundary, StoryCover, getFeaturedStories } from "@/lib/stories";
 
 const WHAT_WE_DO_CARDS = [
@@ -85,7 +86,7 @@ function HoverCard({
 
   return (
     <article
-      className="group relative overflow-hidden border border-white/12 bg-white/[0.02] p-8 transition-colors duration-500 hover:bg-white/[0.04]"
+      className="lift-hover group relative overflow-hidden border border-white/12 bg-white/[0.02] p-8 hover:bg-white/[0.04]"
       onMouseMove={handleMouseMove}
       style={
         {
@@ -432,6 +433,12 @@ export default function App() {
                 Success Stories
               </a>
               <a
+                href="#careers"
+                className="rounded-lg border border-white/15 bg-white/[0.04] px-4 py-3 text-sm font-medium text-zinc-100 transition-colors hover:bg-white/[0.08]"
+              >
+                Careers
+              </a>
+              <a
                 href="#contact"
                 className="rounded-lg border border-white/15 bg-white/[0.04] px-4 py-3 text-sm font-medium text-zinc-100 transition-colors hover:bg-white/[0.08]"
               >
@@ -661,7 +668,7 @@ export default function App() {
             <div className="mt-6 text-center">
               <a
                 href="/stories"
-                className="inline-flex items-center justify-center rounded-2xl bg-white px-8 py-3 text-sm font-semibold text-black transition-colors hover:bg-zinc-200"
+                className="lift-hover inline-flex items-center justify-center rounded-2xl bg-white px-8 py-3 text-sm font-semibold text-black hover:bg-zinc-200"
               >
                 Check out more
               </a>
@@ -669,6 +676,25 @@ export default function App() {
           </div>
         </section>
         </StoriesErrorBoundary>
+
+        <section
+          id="careers"
+          className="relative overflow-hidden border-t border-white/10 py-32 sm:py-40 lg:min-h-[80vh] lg:py-0"
+        >
+          <BackgroundPaths className="min-h-0" reverse />
+          <div className="relative z-10 mx-auto flex min-h-[inherit] max-w-6xl flex-col items-center justify-center px-6 text-center lg:min-h-[80vh]">
+            <p className="mb-6 text-sm font-semibold uppercase tracking-[0.18em] text-zinc-400">Careers</p>
+            <h2 className="max-w-4xl text-4xl font-semibold tracking-tight text-white sm:text-6xl lg:text-7xl">
+              Follow your passion. Find your place.
+            </h2>
+            <a
+              href="/careers"
+              className="lift-hover mt-10 inline-flex items-center justify-center rounded-2xl bg-white px-10 py-4 text-base font-semibold text-black hover:bg-zinc-200"
+            >
+              Explore open positions
+            </a>
+          </div>
+        </section>
 
         <section id="contact" className="border-y border-white/10 py-20 sm:py-28">
           <div className="mx-auto grid max-w-6xl gap-12 px-6 lg:grid-cols-2 lg:items-center">
@@ -686,8 +712,8 @@ export default function App() {
         </section>
       </main>
 
-      <footer className="relative min-h-[430px] overflow-hidden bg-transparent">
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[330px] sm:h-[380px] md:h-[430px]">
+      <footer className="relative min-h-[430px] overflow-clip bg-transparent">
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[330px] overflow-clip sm:h-[380px] md:h-[430px]">
           <Globe className="absolute left-1/2 top-full w-[min(88vw,720px)] max-w-none -translate-x-1/2 -translate-y-[58%] overflow-hidden rounded-full opacity-90" />
           <div
             className={

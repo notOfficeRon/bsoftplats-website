@@ -54,16 +54,26 @@
 
   html {
     scroll-behavior: smooth;
+    overscroll-behavior-y: none;
   }
 
   body {
     @apply bg-background text-foreground antialiased;
     font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+    overscroll-behavior-y: none;
   }
 
   body.brand-atmosphere {
     background-color: var(--canvas-dark);
   }
+}
+
+.lift-hover {
+  transition: transform 200ms ease, background-color 200ms ease, color 200ms ease;
+}
+
+.lift-hover:hover {
+  transform: translateY(-6px);
 }
 
 .hero-content {
