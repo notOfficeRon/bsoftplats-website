@@ -6,6 +6,7 @@ import { ContactFlow } from "@/components/contact-flow";
 import { Globe } from "@/components/ui/globe";
 import { BackgroundPaths } from "@/components/ui/background-paths";
 import { StoriesErrorBoundary, StoryCover, getFeaturedStories } from "@/lib/stories";
+import { SERVICES, servicePath } from "@/lib/services";
 
 const WHAT_WE_DO_CARDS = [
   {
@@ -45,29 +46,6 @@ const BUSINESS_PARTNERS = [
   "GenAI Partner",
 ];
 
-const SERVICE_SCROLL_STEPS = [
-  {
-    title: "DevSecOps & Cloud",
-    description:
-      "Stable, scalable infrastructure with monitoring built in for performance and security.",
-  },
-  {
-    title: "Full-Stack Development",
-    description:
-      "End-to-end development with full visibility, detailed documentation, and a clean handover.",
-  },
-  {
-    title: "AI Solutions",
-    description:
-      "Implementing cutting-edge Generative AI solutions through strategic collaborations to transform your business.",
-  },
-  {
-    title: "Talent Solutions",
-    description:
-      "Providing highly skilled professionals tailored to meet your specific business needs and technical requirements.",
-  },
-];
-
 function HoverCard({
   title,
   description,
@@ -102,111 +80,6 @@ function HoverCard({
       <h3 className="relative mb-3 text-xl font-semibold text-white">{title}</h3>
       <p className="relative text-sm leading-relaxed text-zinc-400">{description}</p>
     </article>
-  );
-}
-
-function ServicesScrollDemo() {
-  const [revealProgress, setRevealProgress] = useState(0);
-  const [scrollProgress, setScrollProgress] = useState(0);
-  const entryRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    let rafId = 0;
-
-    const updateProgress = () => {
-      if (!entryRef.current) return;
-      const bounds = entryRef.current.getBoundingClientRect();
-      const viewportHeight = window.innerHeight;
-      const clamp01 = (value: number) => Math.min(1, Math.max(0, value));
-
-      // Fade in once the section top reaches the lower-middle viewport.
-      const enterStart = viewportHeight * 0.9;
-      const enterEnd = viewportHeight * 0.52;
-      const entered = clamp01((enterStart - bounds.top) / (enterStart - enterEnd));
-
-      // Fade out before reaching section end (so it disappears before next section fully takes over).
-      const leaveStart = viewportHeight * 0.95;
-      const leaveEnd = viewportHeight * 0.58;
-      const leaving = clamp01((bounds.bottom - leaveEnd) / (leaveStart - leaveEnd));
-
-      setRevealProgress(entered * leaving);
-
-      const totalScrollable = Math.max(bounds.height - viewportHeight, 1);
-      const traveled = clamp01((-bounds.top) / totalScrollable);
-      setScrollProgress(traveled);
-    };
-
-    const onScrollOrResize = () => {
-      cancelAnimationFrame(rafId);
-      rafId = window.requestAnimationFrame(updateProgress);
-    };
-
-    updateProgress();
-    window.addEventListener("scroll", onScrollOrResize, { passive: true });
-    window.addEventListener("resize", onScrollOrResize);
-
-    return () => {
-      cancelAnimationFrame(rafId);
-      window.removeEventListener("scroll", onScrollOrResize);
-      window.removeEventListener("resize", onScrollOrResize);
-    };
-  }, []);
-
-  const activeStep = Math.min(
-    SERVICE_SCROLL_STEPS.length - 1,
-    Math.max(0, Math.round(scrollProgress * (SERVICE_SCROLL_STEPS.length - 1))),
-  );
-  const stackOpacity = 0.5 + revealProgress * 0.5;
-  const stackTranslateY = 40 * (1 - revealProgress);
-
-  return (
-    <div ref={entryRef} className="relative">
-      <div className="sticky top-20 z-10 min-h-[70vh] sm:top-24 sm:min-h-[72vh]">
-        <div
-          className="relative z-20 mx-auto flex min-h-[70vh] w-full max-w-3xl items-center justify-center sm:min-h-[72vh]"
-          style={{
-            opacity: stackOpacity,
-            transform: `translate3d(0, ${stackTranslateY}px, 0)`,
-          }}
-        >
-          <div className="w-full">
-            <h3 className="mb-6 text-center text-3xl font-semibold tracking-tight text-white sm:mb-7 sm:text-5xl">
-              Our Services
-            </h3>
-            <p className="mb-8 text-center text-sm text-zinc-400">
-              Comprehensive solutions designed to meet your business needs with a focus on quality and
-              transparency.
-            </p>
-            <div className="space-y-4">
-              {SERVICE_SCROLL_STEPS.map((step, index) => {
-                const isActive = index === activeStep;
-                return (
-                  <article
-                    key={step.title}
-                    className={`border p-6 transition-all duration-500 sm:p-8 ${
-                      isActive
-                        ? "border-white/35 bg-white/10 shadow-[0_0_35px_rgba(255,255,255,0.16)]"
-                        : "border-white/12 bg-white/[0.03] opacity-60 grayscale"
-                    }`}
-                  >
-                    <p className="mb-3 text-xs uppercase tracking-[0.18em] text-zinc-500">
-                      Service {index + 1}
-                    </p>
-                    <h4 className="mb-3 text-2xl font-semibold tracking-tight text-white">
-                      {step.title}
-                    </h4>
-                    <p className="text-sm leading-relaxed text-zinc-200 sm:text-base">
-                      {step.description}
-                    </p>
-                  </article>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      </div>
-      <div className="relative z-0 min-h-[240vh] sm:min-h-[260vh]" />
-    </div>
   );
 }
 
@@ -391,6 +264,15 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    const id = window.location.hash.replace(/^#/, "");
+    if (!id) return;
+    const frame = window.requestAnimationFrame(() => {
+      document.getElementById(id)?.scrollIntoView({ behavior: "auto", block: "start" });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, []);
+
+  useEffect(() => {
     document.body.classList.add("brand-atmosphere");
     document.body.classList.toggle("dev-blue-theme", deepBlueThemeEnabled);
     return () => {
@@ -491,33 +373,32 @@ export default function App() {
           </div>
         </section>
 
-        <section id="services" className="border-t border-white/10 py-20 sm:py-28">
+        <section id="services" className="scroll-mt-[72px] border-t border-white/10 py-20 sm:py-28">
           <div className="mx-auto max-w-6xl px-6">
-              <div className="md:hidden">
-                <h3 className="mb-6 text-center text-3xl font-semibold tracking-tight text-white">
-                  Our Services
-                </h3>
-                <p className="mb-8 text-center text-sm text-zinc-400">
-                  Comprehensive solutions designed to meet your business needs with a focus on quality and
-                  transparency.
-                </p>
-                <div className="space-y-4">
-                  {SERVICE_SCROLL_STEPS.map((step, index) => (
-                    <article key={step.title} className="border border-white/12 bg-white/[0.04] p-6">
-                      <p className="mb-3 text-xs uppercase tracking-[0.18em] text-zinc-500">
-                        Service {index + 1}
-                      </p>
-                      <h4 className="mb-3 text-2xl font-semibold tracking-tight text-white">
-                        {step.title}
-                      </h4>
-                      <p className="text-sm leading-relaxed text-zinc-200">{step.description}</p>
-                    </article>
-                  ))}
-                </div>
-              </div>
-              <div className="hidden md:block">
-                <ServicesScrollDemo />
-              </div>
+            <h3 className="mb-6 text-center text-3xl font-semibold tracking-tight text-white sm:text-5xl">
+              Our Services
+            </h3>
+            <p className="mb-10 text-center text-sm text-zinc-400">
+              Comprehensive solutions designed to meet your business needs with a focus on quality and
+              transparency.
+            </p>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              {SERVICES.map((service) => (
+                <article
+                  key={service.slug}
+                  className="lift-hover flex flex-col border border-white/12 bg-white/[0.03] p-6 sm:p-8"
+                >
+                  <h4 className="mb-3 text-2xl font-semibold tracking-tight text-white">{service.title}</h4>
+                  <p className="mb-6 flex-1 text-sm leading-relaxed text-zinc-300">{service.blurb}</p>
+                  <a
+                    href={servicePath(service.slug)}
+                    className="text-sm font-semibold text-white underline underline-offset-4 hover:text-zinc-300"
+                  >
+                    Read more
+                  </a>
+                </article>
+              ))}
+            </div>
           </div>
         </section>
 
@@ -679,7 +560,7 @@ export default function App() {
 
         <section
           id="careers"
-          className="relative overflow-hidden border-t border-white/10 py-32 sm:py-40 lg:min-h-[80vh] lg:py-0"
+          className="relative scroll-mt-[72px] overflow-hidden border-t border-white/10 py-32 sm:py-40 lg:min-h-[80vh] lg:py-0"
         >
           <BackgroundPaths className="min-h-0" reverse />
           <div className="relative z-10 mx-auto flex min-h-[inherit] max-w-6xl flex-col items-center justify-center px-6 text-center lg:min-h-[80vh]">

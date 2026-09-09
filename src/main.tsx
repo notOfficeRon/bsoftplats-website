@@ -2,7 +2,10 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App";
 import { StoriesErrorBoundary } from "./lib/stories";
+import { StoriesPage } from "./pages/stories-page";
 import { CareersPage } from "./pages/careers-page";
+import { ServicePage } from "./pages/service-page";
+import { getService } from "./lib/services";
 import { FEATURED_STORY_PATHS, StoryPage } from "./pages/story-page";
 import { VerifyContactPage } from "./pages/verify-contact-page";
 import ogImage from "./images/bsoftplatslogo.png";
@@ -92,6 +95,18 @@ function seoForPath(path: string) {
     });
     return;
   }
+  if (path.startsWith("/services/")) {
+    const slug = path.slice("/services/".length);
+    const service = getService(slug);
+    if (service) {
+      applySeo({
+        title: service.title,
+        description: service.blurb,
+        path,
+      });
+      return;
+    }
+  }
   if (path === "/wrong-numbers-were-hiding-real-cloud-waste") {
     applySeo({
       title: "Wrong numbers were hiding real cloud waste",
@@ -152,6 +167,12 @@ function Root() {
     }
     if (path === "/careers") {
       return <CareersPage />;
+    }
+    if (path.startsWith("/services/")) {
+      const slug = path.slice("/services/".length);
+      if (getService(slug)) {
+        return <ServicePage slug={slug} />;
+      }
     }
     if (FEATURED_STORY_PATHS.includes(path as (typeof FEATURED_STORY_PATHS)[number])) {
       return <StoryPage path={path} />;

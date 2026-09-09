@@ -1,13 +1,8 @@
 import { useEffect, useState } from "react";
+import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { SERVICES, servicePath } from "@/lib/services";
 import logoWhiteNoBg from "@/images/logowhitenobg.png";
-
-const NAV_LINKS = [
-  { href: "#about", label: "About" },
-  { href: "#services", label: "Services" },
-  { href: "#success-stories", label: "Success Stories" },
-  { href: "#careers", label: "Careers" },
-];
 
 const LOGO_SRC = logoWhiteNoBg;
 const LOGO_FALLBACK_SRC = logoWhiteNoBg;
@@ -23,6 +18,7 @@ export function SiteHeader({
 }) {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [servicesOpen, setServicesOpen] = useState(false);
   const [linkPrefix, setLinkPrefix] = useState("");
 
   useEffect(() => {
@@ -36,6 +32,11 @@ export function SiteHeader({
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  const closeMenus = () => {
+    setMenuOpen(false);
+    setServicesOpen(false);
+  };
 
   return (
     <header
@@ -56,20 +57,79 @@ export function SiteHeader({
           )}
           aria-label="Primary"
         >
-          {NAV_LINKS.map((link) => (
-            <a
-              key={`${link.label}-${link.href}`}
-              href={`${linkPrefix}${link.href}`}
-              className="rounded px-2 py-2 text-sm text-zinc-300 transition-colors hover:text-white md:p-0"
-              onClick={() => setMenuOpen(false)}
+          <a
+            href={`${linkPrefix}#about`}
+            className="rounded px-2 py-2 text-sm text-zinc-300 transition-colors hover:text-white md:p-0"
+            onClick={closeMenus}
+          >
+            About
+          </a>
+
+          <div className="relative md:group">
+            <div className="flex items-center">
+              <a
+                href={`${linkPrefix}#services`}
+                className="rounded px-2 py-2 text-sm text-zinc-300 transition-colors hover:text-white md:p-0"
+                onClick={closeMenus}
+              >
+                Services
+              </a>
+              <button
+                type="button"
+                className="rounded p-2 text-zinc-300 hover:text-white md:hidden"
+                aria-expanded={servicesOpen}
+                aria-label="Open services menu"
+                onClick={() => setServicesOpen((open) => !open)}
+              >
+                <ChevronDown className={cn("h-4 w-4 transition-transform", servicesOpen && "rotate-180")} />
+              </button>
+            </div>
+            <div
+              className={cn(
+                "flex-col border border-white/10 py-2 md:absolute md:left-0 md:top-full md:z-50 md:min-w-[16rem] md:border",
+                deepBlueThemeEnabled ? "bg-surface-deep" : "bg-canvas-dark",
+                servicesOpen ? "flex" : "hidden",
+                "md:group-hover:flex md:group-focus-within:flex",
+              )}
             >
-              {link.label}
-            </a>
-          ))}
+              {SERVICES.map((service) => (
+                <a
+                  key={service.slug}
+                  href={servicePath(service.slug)}
+                  className="px-4 py-2 text-sm text-zinc-300 hover:bg-white/5 hover:text-white"
+                  onClick={closeMenus}
+                >
+                  {service.title}
+                </a>
+              ))}
+              <a
+                href={`${linkPrefix}#services`}
+                className="px-4 py-2 text-sm text-zinc-400 hover:bg-white/5 hover:text-white md:hidden"
+                onClick={closeMenus}
+              >
+                All services
+              </a>
+            </div>
+          </div>
+
+          <a
+            href={`${linkPrefix}#success-stories`}
+            className="rounded px-2 py-2 text-sm text-zinc-300 transition-colors hover:text-white md:p-0"
+            onClick={closeMenus}
+          >
+            Success Stories
+          </a>
+          <a
+            href={`${linkPrefix}#careers`}
+            className="rounded px-2 py-2 text-sm text-zinc-300 transition-colors hover:text-white md:p-0"
+            onClick={closeMenus}
+          >
+            Careers
+          </a>
           <a
             href={`${linkPrefix}#contact`}
             className="rounded border border-white/20 px-4 py-2 text-sm text-zinc-100 transition-colors hover:bg-white hover:text-black md:py-1.5"
-            onClick={() => setMenuOpen(false)}
+            onClick={closeMenus}
           >
             Apply or Contact
           </a>
