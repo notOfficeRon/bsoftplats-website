@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SERVICES, servicePath } from "@/lib/services";
+import { SOLUTIONS, solutionPath } from "@/lib/solutions";
 import logoWhiteNoBg from "@/images/logowhitenobg.png";
 
 const LOGO_SRC = logoWhiteNoBg;
@@ -31,8 +32,10 @@ export function SiteHeader({
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [servicesOpen, setServicesOpen] = useState(false);
+  const [solutionsOpen, setSolutionsOpen] = useState(false);
   const [linkPrefix, setLinkPrefix] = useState("");
   const servicesMenuRef = useRef<HTMLDivElement | null>(null);
+  const solutionsMenuRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const path = window.location.pathname.replace(/\/+$/, "") || "/";
@@ -49,17 +52,25 @@ export function SiteHeader({
   const closeMenus = () => {
     setMenuOpen(false);
     setServicesOpen(false);
+    setSolutionsOpen(false);
   };
 
   useEffect(() => {
-    if (!servicesOpen) return;
+    if (!servicesOpen && !solutionsOpen) return;
     const onPointerDown = (event: PointerEvent) => {
-      if (!servicesMenuRef.current?.contains(event.target as Node)) {
+      const target = event.target as Node;
+      if (servicesOpen && !servicesMenuRef.current?.contains(target)) {
         setServicesOpen(false);
+      }
+      if (solutionsOpen && !solutionsMenuRef.current?.contains(target)) {
+        setSolutionsOpen(false);
       }
     };
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setServicesOpen(false);
+      if (event.key === "Escape") {
+        setServicesOpen(false);
+        setSolutionsOpen(false);
+      }
     };
     window.addEventListener("pointerdown", onPointerDown);
     window.addEventListener("keydown", onKey);
@@ -67,7 +78,7 @@ export function SiteHeader({
       window.removeEventListener("pointerdown", onPointerDown);
       window.removeEventListener("keydown", onKey);
     };
-  }, [servicesOpen]);
+  }, [servicesOpen, solutionsOpen]);
 
   return (
     <>
@@ -104,7 +115,10 @@ export function SiteHeader({
               className="flex items-center gap-1 rounded px-2 py-2 text-sm text-zinc-300 transition-colors hover:text-white md:p-0"
               aria-expanded={servicesOpen}
               aria-haspopup="true"
-              onClick={() => setServicesOpen((open) => !open)}
+              onClick={() => {
+                setSolutionsOpen(false);
+                setServicesOpen((open) => !open);
+              }}
             >
               Services
               <ChevronDown className={cn("h-4 w-4 transition-transform", servicesOpen && "rotate-180")} />
@@ -132,6 +146,47 @@ export function SiteHeader({
                 onClick={closeMenus}
               >
                 All services
+              </a>
+            </div>
+          </div>
+
+          <div className="relative" ref={solutionsMenuRef}>
+            <button
+              type="button"
+              className="flex items-center gap-1 rounded px-2 py-2 text-sm text-zinc-300 transition-colors hover:text-white md:p-0"
+              aria-expanded={solutionsOpen}
+              aria-haspopup="true"
+              onClick={() => {
+                setServicesOpen(false);
+                setSolutionsOpen((open) => !open);
+              }}
+            >
+              Solutions
+              <ChevronDown className={cn("h-4 w-4 transition-transform", solutionsOpen && "rotate-180")} />
+            </button>
+            <div
+              className={cn(
+                "flex-col border border-white/10 py-2 md:absolute md:left-0 md:top-full md:z-50 md:min-w-[16rem] md:border",
+                deepBlueThemeEnabled ? "bg-surface-deep" : "bg-canvas-dark",
+                solutionsOpen ? "flex" : "hidden",
+              )}
+            >
+              {SOLUTIONS.map((solution) => (
+                <a
+                  key={solution.slug}
+                  href={solutionPath(solution.slug)}
+                  className="px-4 py-2 text-sm text-zinc-300 hover:bg-white/5 hover:text-white"
+                  onClick={closeMenus}
+                >
+                  {solution.title}
+                </a>
+              ))}
+              <a
+                href={`${linkPrefix}#solutions`}
+                className="px-4 py-2 text-sm text-zinc-400 hover:bg-white/5 hover:text-white"
+                onClick={closeMenus}
+              >
+                All solutions
               </a>
             </div>
           </div>

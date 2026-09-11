@@ -59,16 +59,25 @@ export function CareersPage() {
             {OPENINGS.map((opening) => {
               const expanded = openSlug === opening.slug;
               return (
-                <article key={opening.slug} className="border border-white/12 bg-white/[0.03]">
+                <article
+                  key={opening.slug}
+                  className={`overflow-hidden border border-white/12 bg-white/[0.03] ${
+                    expanded ? "rounded-3xl" : "rounded-full"
+                  }`}
+                >
                   <button
                     type="button"
-                    className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left"
+                    className={`group flex w-full items-center justify-between gap-4 px-6 py-4 text-left transition-colors hover:bg-white ${
+                      expanded ? "rounded-t-3xl" : "rounded-full"
+                    }`}
                     aria-expanded={expanded}
                     onClick={() => setOpenSlug(expanded ? null : opening.slug)}
                   >
-                    <h2 className="text-xl font-semibold text-white">{opening.title}</h2>
+                    <h2 className="text-xl font-semibold text-white transition-colors group-hover:text-black">
+                      {opening.title}
+                    </h2>
                     <ChevronDown
-                      className={`h-5 w-5 shrink-0 text-zinc-400 transition-transform duration-300 ${expanded ? "rotate-180" : ""}`}
+                      className={`h-5 w-5 shrink-0 text-zinc-400 transition-transform duration-300 group-hover:text-black ${expanded ? "rotate-180" : ""}`}
                     />
                   </button>
                   <div
@@ -81,13 +90,37 @@ export function CareersPage() {
                         {opening.description ? (
                           <p className="mb-4 text-sm leading-relaxed text-zinc-300">{opening.description}</p>
                         ) : null}
+                        {opening.responsibilities.length > 0 ? (
+                          <>
+                            <p className="mb-2 text-sm font-semibold text-white">
+                              Responsibilities
+                            </p>
+                            <ul className="mb-5 list-disc space-y-1.5 pl-5 text-sm text-zinc-300">
+                              {opening.responsibilities.map((item) => (
+                                <li key={item}>{item}</li>
+                              ))}
+                            </ul>
+                          </>
+                        ) : null}
                         {opening.requirements.length > 0 ? (
                           <>
-                            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-zinc-500">
+                            <p className="mb-2 text-sm font-semibold text-white">
                               Requirements
                             </p>
                             <ul className="mb-5 list-disc space-y-1.5 pl-5 text-sm text-zinc-300">
                               {opening.requirements.map((item) => (
+                                <li key={item}>{item}</li>
+                              ))}
+                            </ul>
+                          </>
+                        ) : null}
+                        {opening.preferred.length > 0 ? (
+                          <>
+                            <p className="mb-2 text-sm font-semibold text-white">
+                              Nice to have
+                            </p>
+                            <ul className="mb-5 list-disc space-y-1.5 pl-5 text-sm text-zinc-300">
+                              {opening.preferred.map((item) => (
                                 <li key={item}>{item}</li>
                               ))}
                             </ul>

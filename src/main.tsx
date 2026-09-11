@@ -5,7 +5,9 @@ import { StoriesErrorBoundary } from "./lib/stories";
 import { StoriesPage } from "./pages/stories-page";
 import { CareersPage } from "./pages/careers-page";
 import { ServicePage } from "./pages/service-page";
+import { SolutionPage } from "./pages/solution-page";
 import { getService } from "./lib/services";
+import { getSolution } from "./lib/solutions";
 import { FEATURED_STORY_PATHS, StoryPage } from "./pages/story-page";
 import { VerifyContactPage } from "./pages/verify-contact-page";
 import ogImage from "./images/bsoftplatslogo.png";
@@ -107,6 +109,18 @@ function seoForPath(path: string) {
       return;
     }
   }
+  if (path.startsWith("/solutions/")) {
+    const slug = path.slice("/solutions/".length);
+    const solution = getSolution(slug);
+    if (solution) {
+      applySeo({
+        title: solution.title,
+        description: solution.blurb,
+        path,
+      });
+      return;
+    }
+  }
   if (path === "/wrong-numbers-were-hiding-real-cloud-waste") {
     applySeo({
       title: "Wrong numbers were hiding real cloud waste",
@@ -172,6 +186,12 @@ function Root() {
       const slug = path.slice("/services/".length);
       if (getService(slug)) {
         return <ServicePage slug={slug} />;
+      }
+    }
+    if (path.startsWith("/solutions/")) {
+      const slug = path.slice("/solutions/".length);
+      if (getSolution(slug)) {
+        return <SolutionPage slug={slug} />;
       }
     }
     if (FEATURED_STORY_PATHS.includes(path as (typeof FEATURED_STORY_PATHS)[number])) {

@@ -69,7 +69,7 @@
 }
 
 .lift-hover {
-  transition: transform 200ms ease, background-color 200ms ease, color 200ms ease;
+  transition: transform 200ms ease, background-color 200ms ease, color 200ms ease, border-color 200ms ease;
 }
 
 .lift-hover:hover {

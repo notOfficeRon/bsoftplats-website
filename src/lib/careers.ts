@@ -2,7 +2,9 @@ export type Opening = {
   slug: string;
   title: string;
   description: string;
+  responsibilities: string[];
   requirements: string[];
+  preferred: string[];
 };
 
 function safeString(value: unknown) {
@@ -30,31 +32,42 @@ function isHiddenFolder(slug: string) {
 function parseOpeningMarkdown(raw: unknown) {
   const title = { value: "" };
   const description = { value: "" };
+  const responsibilities: string[] = [];
   const requirements: string[] = [];
+  const preferred: string[] = [];
 
   try {
     const text = safeString(raw).replace(/\r\n/g, "\n");
-    let section: "meta" | "requirements" = "meta";
+    let section: "meta" | "description" | "responsibilities" | "requirements" | "preferred" = "meta";
 
     for (const line of text.split("\n")) {
       const trimmed = line.trim();
       if (!trimmed) continue;
 
+      if (/^responsibilities\s*:/i.test(trimmed)) {
+        section = "responsibilities";
+        continue;
+      }
       if (/^requirements\s*:/i.test(trimmed)) {
         section = "requirements";
-        const rest = trimmed.replace(/^requirements\s*:/i, "").trim();
-        if (rest.startsWith("-")) {
-          const item = rest.replace(/^-+\s*/, "").trim();
-          if (item) requirements.push(item);
-        }
+        continue;
+      }
+      if (/^(nice to have|preferred)\s*:/i.test(trimmed)) {
+        section = "preferred";
         continue;
       }
 
-      if (section === "requirements") {
-        if (trimmed.startsWith("-")) {
-          const item = trimmed.replace(/^-+\s*/, "").trim();
-          if (item) requirements.push(item);
-        }
+      const bullet = trimmed.startsWith("-") ? trimmed.replace(/^-+\s*/, "").trim() : "";
+      if (section === "responsibilities" && bullet) {
+        responsibilities.push(bullet);
+        continue;
+      }
+      if (section === "requirements" && bullet) {
+        requirements.push(bullet);
+        continue;
+      }
+      if (section === "preferred" && bullet) {
+        preferred.push(bullet);
         continue;
       }
 
@@ -66,6 +79,11 @@ function parseOpeningMarkdown(raw: unknown) {
       const descriptionMatch = /^description\s*:\s*(.*)$/i.exec(trimmed);
       if (descriptionMatch) {
         description.value = descriptionMatch[1].trim();
+        if (!description.value) section = "description";
+        continue;
+      }
+      if (section === "description") {
+        description.value = description.value ? `${description.value} ${trimmed}` : trimmed;
       }
     }
   } catch {
@@ -75,7 +93,9 @@ function parseOpeningMarkdown(raw: unknown) {
   return {
     title: title.value,
     description: description.value,
+    responsibilities,
     requirements,
+    preferred,
   };
 }
 
@@ -120,7 +140,9 @@ function loadOpenings(): Opening[] {
           slug,
           title: parsed.title || slug,
           description: parsed.description,
+          responsibilities: parsed.responsibilities,
           requirements: parsed.requirements,
+          preferred: parsed.preferred,
         });
       } catch {
         continue;

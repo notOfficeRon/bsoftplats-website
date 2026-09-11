@@ -1,5 +1,5 @@
 import { type CSSProperties, type MouseEvent, useCallback, useEffect, useRef, useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowUpRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { HeroSection } from "@/components/hero-section";
 import { SiteHeader } from "@/components/site-header";
 import { ContactFlow } from "@/components/contact-flow";
@@ -7,6 +7,7 @@ import { Globe } from "@/components/ui/globe";
 import { BackgroundPaths } from "@/components/ui/background-paths";
 import { StoriesErrorBoundary, StoryCover, getFeaturedStories } from "@/lib/stories";
 import { SERVICES, servicePath } from "@/lib/services";
+import { SOLUTIONS, SOLUTIONS_INTRO, solutionPath } from "@/lib/solutions";
 
 const WHAT_WE_DO_CARDS = [
   {
@@ -309,6 +310,12 @@ export default function App() {
                 Services
               </a>
               <a
+                href="#solutions"
+                className="rounded-lg border border-white/15 bg-white/[0.04] px-4 py-3 text-sm font-medium text-zinc-100 transition-colors hover:bg-white/[0.08]"
+              >
+                Solutions
+              </a>
+              <a
                 href="#success-stories"
                 className="rounded-lg border border-white/15 bg-white/[0.04] px-4 py-3 text-sm font-medium text-zinc-100 transition-colors hover:bg-white/[0.08]"
               >
@@ -379,24 +386,62 @@ export default function App() {
               Our Services
             </h3>
             <p className="mb-10 text-center text-sm text-zinc-400">
-              Comprehensive solutions designed to meet your business needs with a focus on quality and
-              transparency.
+              Six lines of work. Click through if you want the detail.
             </p>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               {SERVICES.map((service) => (
                 <article
                   key={service.slug}
-                  className="lift-hover flex flex-col border border-white/12 bg-white/[0.03] p-6 sm:p-8"
+                  className="lift-hover group flex flex-col border border-white/12 bg-white/[0.03] p-6 transition-colors hover:border-white hover:bg-white sm:p-8"
                 >
-                  <h4 className="mb-3 text-2xl font-semibold tracking-tight text-white">{service.title}</h4>
-                  <p className="mb-6 flex-1 text-sm leading-relaxed text-zinc-300">{service.blurb}</p>
+                  <h4 className="mb-3 text-2xl font-semibold tracking-tight text-white transition-colors group-hover:text-black">
+                    {service.title}
+                  </h4>
+                  <p className="mb-6 flex-1 text-sm leading-relaxed text-zinc-300 transition-colors group-hover:text-zinc-700">
+                    {service.blurb}
+                  </p>
                   <a
                     href={servicePath(service.slug)}
-                    className="text-sm font-semibold text-white underline underline-offset-4 hover:text-zinc-300"
+                    className="text-sm font-semibold text-white underline underline-offset-4 transition-colors group-hover:text-black hover:text-zinc-700"
                   >
                     Read more
                   </a>
                 </article>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section id="solutions" className="scroll-mt-[72px] border-t border-white/10 py-20 sm:py-28">
+          <div className="mx-auto max-w-[1400px] px-6">
+            <h3 className="mb-6 text-center text-3xl font-semibold tracking-tight text-white sm:text-5xl">
+              Solutions
+            </h3>
+            <p className="mx-auto mb-10 max-w-3xl text-center text-base leading-relaxed text-zinc-400 sm:text-lg">
+              {SOLUTIONS_INTRO}
+            </p>
+            <div className="mx-auto max-w-6xl space-y-4">
+              {SOLUTIONS.map((solution) => (
+                <a
+                  key={solution.slug}
+                  href={solutionPath(solution.slug)}
+                  className="group flex items-center gap-4 rounded-full border border-white/12 bg-white/[0.03] px-6 py-5 transition-colors hover:bg-white sm:px-8"
+                >
+                  <div className="min-w-0 flex-1 text-left">
+                    <h4 className="text-2xl font-semibold tracking-tight text-white transition-colors group-hover:text-black sm:text-3xl">
+                      {solution.title}
+                    </h4>
+                    <p className="text-sm text-zinc-500 transition-colors group-hover:text-zinc-600">
+                      {solution.subtitle}
+                    </p>
+                  </div>
+                  <span
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/20 text-zinc-300 transition-colors group-hover:border-black/20 group-hover:text-black"
+                    aria-hidden="true"
+                  >
+                    <ArrowUpRight className="h-4 w-4" strokeWidth={1.75} />
+                  </span>
+                </a>
               ))}
             </div>
           </div>
