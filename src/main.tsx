@@ -13,6 +13,52 @@ import { VerifyContactPage } from "./pages/verify-contact-page";
 import ogImage from "./images/bsoftplatslogo.png";
 import "./index.css";
 
+function navigationType() {
+  try {
+    const entry = performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming | undefined;
+    return entry?.type ?? "navigate";
+  } catch {
+    return "navigate";
+  }
+}
+
+function scrollStorageKey() {
+  const path = window.location.pathname.replace(/\/+$/, "") || "/";
+  return `bsoftplats-scroll:${path}`;
+}
+
+function persistScroll() {
+  try {
+    sessionStorage.setItem(scrollStorageKey(), String(window.scrollY));
+  } catch {
+    // ignore quota
+  }
+}
+
+function restoreScrollOnReload() {
+  if (navigationType() !== "reload") return;
+  history.scrollRestoration = "manual";
+  try {
+    if (window.location.hash) {
+      history.replaceState(null, "", `${window.location.pathname}${window.location.search}`);
+    }
+    const raw = sessionStorage.getItem(scrollStorageKey());
+    if (raw == null) return;
+    const y = Number(raw);
+    if (!Number.isFinite(y)) return;
+    const restore = () => window.scrollTo(0, y);
+    restore();
+    window.requestAnimationFrame(restore);
+    window.addEventListener("load", restore, { once: true });
+  } catch {
+    // ignore
+  }
+}
+
+restoreScrollOnReload();
+window.addEventListener("scroll", persistScroll, { passive: true });
+window.addEventListener("pagehide", persistScroll);
+
 const SITE_NAME = "BSoftPlats";
 
 function siteOrigin() {

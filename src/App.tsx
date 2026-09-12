@@ -265,6 +265,12 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    try {
+      const entry = performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming | undefined;
+      if (entry?.type === "reload") return;
+    } catch {
+      // keep hash scroll
+    }
     const id = window.location.hash.replace(/^#/, "");
     if (!id) return;
     const frame = window.requestAnimationFrame(() => {
