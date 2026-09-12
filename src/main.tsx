@@ -10,6 +10,7 @@ import { getService } from "./lib/services";
 import { getSolution } from "./lib/solutions";
 import { FEATURED_STORY_PATHS, StoryPage } from "./pages/story-page";
 import { VerifyContactPage } from "./pages/verify-contact-page";
+import { DevPage } from "./pages/dev-page";
 import ogImage from "./images/bsoftplatslogo.png";
 import "./index.css";
 
@@ -197,6 +198,15 @@ function seoForPath(path: string) {
     });
     return;
   }
+  if (path === "/dev") {
+    applySeo({
+      title: "Dev",
+      description: "Internal deploy check.",
+      path,
+      index: false,
+    });
+    return;
+  }
   if (path === "/verify-contact") {
     applySeo({
       title: "Confirm your request",
@@ -242,6 +252,9 @@ function Root() {
     }
     if (FEATURED_STORY_PATHS.includes(path as (typeof FEATURED_STORY_PATHS)[number])) {
       return <StoryPage path={path} />;
+    }
+    if (path === "/dev") {
+      return <DevPage />;
     }
     if (path === "/verify-contact") {
       return <VerifyContactPage />;
