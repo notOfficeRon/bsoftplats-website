@@ -1,4 +1,4 @@
-import { type CSSProperties, type MouseEvent, useCallback, useEffect, useRef, useState } from "react";
+import { type CSSProperties, type ReactNode, useCallback, useEffect, useRef, useState } from "react";
 import { ArrowUpRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { HeroSection } from "@/components/hero-section";
 import { SiteHeader } from "@/components/site-header";
@@ -8,24 +8,7 @@ import { BackgroundPaths } from "@/components/ui/background-paths";
 import { StoriesErrorBoundary, StoryCover, getFeaturedStories } from "@/lib/stories";
 import { SERVICES, servicePath } from "@/lib/services";
 import { SOLUTIONS, SOLUTIONS_INTRO, solutionPath } from "@/lib/solutions";
-
-const WHAT_WE_DO_CARDS = [
-  {
-    title: "People-first",
-    description:
-      "We invest in talent growth and long-term careers. That’s the foundation of the work: stronger delivery, loyalty, and lasting value.",
-  },
-  {
-    title: "Client partnerships",
-    description:
-      "When the team thrives, clients get better results. Full project transparency, with independent maintenance or ongoing support.",
-  },
-  {
-    title: "How we work today",
-    description:
-      "We currently serve four companies, with two strategic partnerships: one in banking, one in Generative AI.",
-  },
-];
+import { cn } from "@/lib/utils";
 
 const SUCCESS_STORIES = (() => {
   try {
@@ -38,6 +21,54 @@ const STORY_DURATION_MS = 4000;
 const STORY_PART_KEYS = ["image", "title", "summary", "link"] as const;
 type StoryPartKey = (typeof STORY_PART_KEYS)[number];
 
+function RevealOnce({
+  children,
+  className,
+  delayMs = 0,
+}: {
+  children: ReactNode;
+  className?: string;
+  delayMs?: number;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setVisible(true);
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) return;
+        setVisible(true);
+        observer.disconnect();
+      },
+      { threshold: 0.14, rootMargin: "0px 0px -8% 0px" },
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div
+      ref={ref}
+      className={cn(
+        "transition-[opacity,transform] duration-700 ease-out motion-reduce:translate-y-0 motion-reduce:opacity-100 motion-reduce:transition-none",
+        visible ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0",
+        className,
+      )}
+      style={{ transitionDelay: visible ? `${delayMs}ms` : "0ms" }}
+    >
+      {children}
+    </div>
+  );
+}
+
 const BUSINESS_PARTNERS = [
   "Skipper Soft",
   "Atalef",
@@ -46,43 +77,6 @@ const BUSINESS_PARTNERS = [
   "Banking Partner",
   "GenAI Partner",
 ];
-
-function HoverCard({
-  title,
-  description,
-}: {
-  title: string;
-  description: string;
-}) {
-  const [glowPosition, setGlowPosition] = useState({ x: 50, y: 50 });
-
-  const handleMouseMove = (event: MouseEvent<HTMLElement>) => {
-    const bounds = event.currentTarget.getBoundingClientRect();
-    const x = ((event.clientX - bounds.left) / bounds.width) * 100;
-    const y = ((event.clientY - bounds.top) / bounds.height) * 100;
-    setGlowPosition({ x, y });
-  };
-
-  return (
-    <article
-      className="lift-hover group relative overflow-hidden border border-white/12 bg-white/[0.02] p-8 hover:bg-white/[0.04]"
-      onMouseMove={handleMouseMove}
-      style={
-        {
-          "--glow-x": `${glowPosition.x}%`,
-          "--glow-y": `${glowPosition.y}%`,
-        } as CSSProperties
-      }
-    >
-      <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100">
-        <div className="hover-grain-glow absolute inset-0" />
-        <div className="hover-grain-noise absolute inset-0" />
-      </div>
-      <h3 className="relative mb-3 text-xl font-semibold text-white">{title}</h3>
-      <p className="relative text-sm leading-relaxed text-zinc-400">{description}</p>
-    </article>
-  );
-}
 
 export default function App() {
   const [showDevThemeToggle, setShowDevThemeToggle] = useState(false);
@@ -355,19 +349,47 @@ export default function App() {
           </div>
         </section>
 
-        <section id="about" className="border-t border-white/10 py-40 sm:py-44 lg:py-48">
+        <section id="about" className="scroll-mt-[72px] border-t border-white/10 py-32 sm:py-40 lg:py-48">
           <div className="mx-auto max-w-6xl px-6">
-            <h2 className="mb-14 text-center text-4xl font-semibold tracking-tight text-white sm:text-5xl">
-              About us
-            </h2>
-            <div className="grid gap-5 lg:grid-cols-3">
-              {WHAT_WE_DO_CARDS.map((card) => (
-                <HoverCard
-                  key={card.title}
-                  title={card.title}
-                  description={card.description}
-                />
-              ))}
+            <div className="grid gap-12 text-base leading-relaxed text-zinc-300 sm:text-lg lg:grid-cols-2 lg:items-start lg:gap-16">
+              <div>
+                <p className="mb-6 text-xs font-semibold uppercase tracking-[0.18em] text-zinc-500">About</p>
+                <h2 className="mb-10 max-w-xl text-4xl font-semibold tracking-tight text-white sm:mb-12 sm:text-5xl lg:text-6xl">
+                  When we are done, you should not need us.
+                </h2>
+                <RevealOnce className="space-y-6">
+                  <p>
+                    Most engineering vendors are built to stay. You rent capacity, the work happens while you pay, and
+                    when the contract ends the knowledge walks out with the people.
+                  </p>
+                  <p>
+                    We are built the other way. We go into systems that are slow, expensive, or fragile, fix the cause
+                    instead of the symptom, and hand it over running. What stays behind keeps working without us.
+                  </p>
+                </RevealOnce>
+              </div>
+              <RevealOnce className="space-y-6 lg:border-l lg:border-white/10 lg:pl-16" delayMs={90}>
+                <ul className="list-disc space-y-3 pl-5 text-zinc-200 marker:text-zinc-500">
+                  <li>A pipeline your developers run themselves</li>
+                  <li>A cost model your finance team can read</li>
+                  <li>A recovery procedure someone can execute at 3am</li>
+                  <li>An architecture your next five hires understand on day one</li>
+                </ul>
+                <p>
+                  If what you need is capacity, we do that too. It is one of the things we offer, not the reason we
+                  exist.
+                </p>
+                <p>
+                  Tell us what is slow, what is expensive, or what keeps breaking. You will get a straight answer on
+                  what we would do, what it takes, and what you own when we are gone.
+                </p>
+                <a
+                  href="#contact"
+                  className="lift-hover inline-flex items-center justify-center rounded-2xl bg-white px-8 py-3 text-sm font-semibold text-black hover:bg-zinc-200"
+                >
+                  Get in contact
+                </a>
+              </RevealOnce>
             </div>
           </div>
         </section>
@@ -403,6 +425,7 @@ export default function App() {
             <h3 className="mb-6 text-center text-3xl font-semibold tracking-tight text-white sm:text-5xl">
               Our Services
             </h3>
+            <RevealOnce>
             <p className="mb-10 text-center text-sm text-zinc-400">
               Six lines of work. Click through if you want the detail.
             </p>
@@ -427,6 +450,7 @@ export default function App() {
                 </article>
               ))}
             </div>
+            </RevealOnce>
           </div>
         </section>
 
@@ -435,6 +459,7 @@ export default function App() {
             <h3 className="mb-6 text-center text-3xl font-semibold tracking-tight text-white sm:text-5xl">
               Solutions
             </h3>
+            <RevealOnce>
             <p className="mx-auto mb-10 max-w-3xl text-center text-base leading-relaxed text-zinc-400 sm:text-lg">
               {SOLUTIONS_INTRO}
             </p>
@@ -462,6 +487,7 @@ export default function App() {
                 </a>
               ))}
             </div>
+            </RevealOnce>
           </div>
         </section>
 
@@ -475,6 +501,7 @@ export default function App() {
             <h2 className="mb-4 text-center text-3xl font-semibold tracking-tight text-white sm:mb-6 sm:text-4xl">
               Success Stories
             </h2>
+            <RevealOnce>
             {activeStory ? (
             <div className="mx-auto w-full max-w-5xl overflow-hidden border border-zinc-300 bg-white">
               <div className="sm:hidden p-4">
@@ -631,6 +658,7 @@ export default function App() {
                 Check out more
               </a>
             </div>
+            </RevealOnce>
           </div>
         </section>
         </StoriesErrorBoundary>
@@ -645,12 +673,14 @@ export default function App() {
             <h2 className="max-w-4xl text-4xl font-semibold tracking-tight text-white sm:text-6xl lg:text-7xl">
               Follow your passion. Find your place.
             </h2>
+            <RevealOnce>
             <a
               href="/careers"
               className="lift-hover mt-10 inline-flex items-center justify-center rounded-2xl bg-white px-10 py-4 text-base font-semibold text-black hover:bg-zinc-200"
             >
               Explore open positions
             </a>
+            </RevealOnce>
           </div>
         </section>
 
@@ -660,12 +690,16 @@ export default function App() {
               <h2 className="mb-4 text-3xl font-semibold tracking-tight text-white sm:text-4xl">
                 Get in contact
               </h2>
+              <RevealOnce>
               <p className="max-w-lg text-base text-zinc-400">
                 Let’s talk about your roadmap, your bottlenecks, and what we can ship together.
               </p>
+              </RevealOnce>
             </div>
 
-            <ContactFlow />
+            <RevealOnce delayMs={80}>
+              <ContactFlow />
+            </RevealOnce>
           </div>
         </section>
       </main>
