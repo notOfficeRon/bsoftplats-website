@@ -34,7 +34,7 @@ const SUCCESS_STORIES = (() => {
     return [];
   }
 })();
-const STORY_DURATION_MS = 6000;
+const STORY_DURATION_MS = 4000;
 const STORY_PART_KEYS = ["image", "title", "summary", "link"] as const;
 type StoryPartKey = (typeof STORY_PART_KEYS)[number];
 
@@ -147,12 +147,16 @@ export default function App() {
   );
 
   const runStoryTransition = useCallback(
-    (direction: "prev" | "next") => {
+    (direction: "prev" | "next" | number) => {
       if (SUCCESS_STORIES.length === 0 || isStoryTransitioningRef.current) return;
+      if (typeof direction === "number") {
+        if (direction < 0 || direction >= SUCCESS_STORIES.length) return;
+        if (direction === activeStoryIndex) return;
+      }
 
       setIsStoryTransitioning(true);
       isStoryTransitioningRef.current = true;
-      setActiveArrow(direction);
+      setActiveArrow(direction === "prev" || direction === "next" ? direction : null);
       clearStoryTimers();
 
       const outPhase = randomPartTimings("out");
@@ -168,6 +172,7 @@ export default function App() {
 
       scheduleStoryTimer(() => {
         setActiveStoryIndex((current) => {
+          if (typeof direction === "number") return direction;
           if (direction === "prev") {
             return current === 0 ? SUCCESS_STORIES.length - 1 : current - 1;
           }
@@ -208,7 +213,7 @@ export default function App() {
         setActiveArrow(null);
       }, 170);
     },
-    [clearStoryTimers, randomPartTimings, scheduleStoryTimer],
+    [activeStoryIndex, clearStoryTimers, randomPartTimings, scheduleStoryTimer],
   );
 
   const showPreviousStory = useCallback(() => {
@@ -218,6 +223,13 @@ export default function App() {
   const showNextStory = useCallback(() => {
     runStoryTransition("next");
   }, [runStoryTransition]);
+
+  const showStoryAt = useCallback(
+    (index: number) => {
+      runStoryTransition(index);
+    },
+    [runStoryTransition],
+  );
 
   useEffect(() => {
     return () => {
@@ -572,12 +584,26 @@ export default function App() {
                   return (
                     <div key={story.title} className="flex flex-col">
                       <div className="mb-1 hidden h-10 sm:block">
-                        <span className="line-clamp-2 text-[11px] uppercase leading-5 tracking-[0.14em] text-zinc-600">
+                        <button
+                          type="button"
+                          onClick={() => showStoryAt(index)}
+                          className={`line-clamp-2 text-left text-[11px] uppercase leading-5 tracking-[0.14em] transition-colors hover:text-black ${
+                            isActive ? "text-black" : "text-zinc-600"
+                          }`}
+                        >
                           {story.title}
-                        </span>
+                        </button>
                       </div>
                       <div className="mb-1 sm:hidden">
-                        <span className="text-[11px] uppercase tracking-[0.14em] text-zinc-600">Story {index + 1}</span>
+                        <button
+                          type="button"
+                          onClick={() => showStoryAt(index)}
+                          className={`text-[11px] uppercase tracking-[0.14em] transition-colors hover:text-black ${
+                            isActive ? "text-black" : "text-zinc-600"
+                          }`}
+                        >
+                          Story {index + 1}
+                        </button>
                       </div>
                       <div className="mt-auto h-[2px] w-full bg-zinc-300">
                         <div

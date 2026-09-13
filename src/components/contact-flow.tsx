@@ -980,6 +980,9 @@ export function ContactFlow({
                         Open it on this same device and browser so your resume can be attached.
                       </p>
                     ) : null}
+                    <p className="mt-5 text-sm font-semibold text-red-400">
+                      If you don't confirm, your {reason === "apply" ? "application" : "inquiry"} won't send.
+                    </p>
                   </div>
                 ) : formModalStep === "reason" ? (
                   <div className="overflow-y-auto bg-surface-deep/80 px-5 py-5 sm:px-6">
@@ -1128,6 +1131,10 @@ export function ContactFlow({
                       </div>
                     )}
                     {sendError ? <p className="mb-4 text-sm text-red-400">{sendError}</p> : null}
+                    <p className="mb-3 text-sm font-bold text-white">
+                      We will send you an email for confirmation. Only after you verify that email will we send
+                      your {reason === "apply" ? "application" : "inquiry"}.
+                    </p>
                     <div
                       onMouseEnter={() => {
                         if (!canSend && !sending) flashMissingFields();
@@ -1144,7 +1151,7 @@ export function ContactFlow({
                         aria-disabled={!canSend || sending}
                         onClick={() => void submitContact()}
                       >
-                        {sending ? "Sending…" : "Send"}
+                        {sending ? "Sending…" : "Confirm email"}
                         <Mail className="ml-2 h-4 w-4" />
                       </Button>
                     </div>
