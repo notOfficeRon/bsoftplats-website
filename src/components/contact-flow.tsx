@@ -324,156 +324,128 @@ function PrivacyPolicyModal({ onClose }: { onClose: () => void }) {
           </button>
         </div>
         <div className="overflow-y-auto px-5 py-6 text-sm leading-relaxed text-zinc-300 sm:px-8">
-          <p className="mb-4">
-            This privacy policy explains how BSoftPlats handles your personal information and data.
-            The policy is structured so you can quickly find answers to the questions that interest
-            you the most.
-          </p>
-          <p className="mb-4">
-            Your privacy is important to us. This privacy policy applies to all the services offered
-            by BSoftPlats and any affiliated entity (collectively “BSoftPlats”) except where
-            otherwise noted. We refer to those services collectively as the “services” in this
-            policy. This privacy policy describes how we collect, share, use, and protect the
-            information we collect when you use our services.
-          </p>
           <p className="mb-6">
-            The terms “we,” “our” and “us” in this Privacy Policy mean BSoftPlats. The terms “you”
-            and “your” refer to all users of the services. “Computer” means any personal computer,
-            client computer, server computer, mobile device, communication device or any other
-            device or system capable of accessing, communicating with, and/or using the services.
-            By using the services through a computer you are consenting to our collection of your
-            information as set forth in this privacy policy and as amended by us.
+            This notice explains how BSoftPlats handles personal data submitted through the contact
+            and job-application form on this website. “We,” “our,” and “us” mean BSoftPlats. “You”
+            means the person filling in the form.
           </p>
 
-          <h3 className="mb-2 text-base font-semibold text-white">Your Consent</h3>
-          <p className="mb-4">
-            By accessing, viewing and/or otherwise using the Site, you consent to (i) the
-            collection, transfer, manipulation, storage, disclosure and other uses of your
-            Information as described in the Terms and Conditions of Use and in this Privacy Policy,
-            and (ii) to the transfer of such Information outside of the country where you reside
-            and outside the European Economic Area (“EEA”), to other countries for storage,
-            processing and use by us, and to the transmission of data on an international basis.
+          <h3 className="mb-2 text-base font-semibold text-white">What we collect</h3>
+          <p className="mb-3">
+            For a business inquiry we collect: first name, last name, email address, phone number
+            (if you provide it), company, job role, country (if you provide it), how you heard about
+            us (if you provide it), your message, and whether you chose inquiry or application.
+          </p>
+          <p className="mb-3">
+            For a job application we also collect your answers to the screening questions (EU
+            citizenship, whether you can start urgently, overlapping hours with Israel and EU
+            clients, at least four years in the role, and working in English with clients) and a
+            resume file (PDF or Word, maximum 2MB).
           </p>
           <p className="mb-6">
-            Where we are processing data based on your consent, you have the right to withdraw that
-            consent at any time which will not affect the lawfulness of the processing before your
-            consent was withdrawn.
+            To stop bots we run Cloudflare Turnstile. That sends a short-lived token and your
+            request IP address to Cloudflare so they can tell us whether the submitter looks human.
           </p>
 
-          <h3 className="mb-2 text-base font-semibold text-white">Information We Collect</h3>
+          <h3 className="mb-2 text-base font-semibold text-white">What we use it for</h3>
+          <p className="mb-3">
+            We use this data only to confirm it is you, then to send your inquiry or application to
+            BSoftPlats so we can reply. We do not sell it. We do not use it for surveys, employee
+            questionnaires, or advertising profiles.
+          </p>
           <p className="mb-6">
-            When you open and/or use our services, we receive and collect certain information,
-            including information about you. The information that we receive and collect depends in
-            part on what you do when you use our services, and falls generally into one of two
-            categories. Some of this information is information you submit, and other information is
-            collected automatically when you access, e.g., when you open and/or use our Services.
+            If you apply, we treat the submission as a job application, not a general inquiry. That
+            includes your resume and the screening answers (including whether you are an EU
+            citizen). We use those answers to understand work-eligibility and how you would work
+            with Israel and EU clients. We do not ask for health, religion, politics, or similar
+            data. If your resume contains extra information you chose to include, we still only use
+            the file to evaluate the application.
           </p>
 
-          <h3 className="mb-2 text-base font-semibold text-white">Information You Submit</h3>
+          <h3 className="mb-2 text-base font-semibold text-white">How it moves (the pipeline)</h3>
+          <p className="mb-3">
+            Your browser sends the form to a BSoftPlats function hosted on Vercel. That function
+            checks the fields, checks Turnstile, and builds a short-lived signed link (valid for 5
+            minutes). We do not keep a BSoftPlats database on Vercel. The form is not stored there
+            as a record. After the request finishes, that copy is gone from the application. Vercel
+            may still keep operational logs (for example request metadata, and in some failed checks
+            an email address) for a limited time on their platform. That is not our inbox and we do
+            not use it as a filing system.
+          </p>
+          <p className="mb-3">
+            For applications, the resume stays in your browser until you confirm. It is uploaded
+            only on the confirmation request, then attached to the collection email.
+          </p>
+          <p className="mb-3">
+            The function then calls Resend to send email. First, Resend delivers a confirmation
+            email to the address you typed. That email contains your first name and a Confirm
+            button. The link in that email carries your form fields (not the resume) so we can
+            rebuild the inquiry when you click. That message sits in your inbox. If you never
+            confirm, we never send the inquiry to BSoftPlats. The confirmation email can remain in
+            your inbox until you delete it.
+          </p>
+          <p className="mb-3">
+            After you confirm, Resend delivers a second email to a BSoftPlats collection inbox. That
+            email is the full inquiry (and the resume, if you applied). Reply-To is set to your
+            email so we can answer you. We do not keep a BSoftPlats mailbox inside Resend. Resend is
+            the delivery hop. Resend may keep its own send logs (such as recipient, subject, and
+            timestamps) on their side under their retention rules. We do not use Resend as our
+            store of inquiries.
+          </p>
           <p className="mb-6">
-            Some of the information you may submit to use the services is personal information.
-            Personal information means all data and/or information that identifies you. Examples of
-            personal information we may collect include your internet protocol (IP) address. We use
-            personal information to allow you to use services. By using the services and submitting
-            personal information to us, you consent to our receiving and collecting this
-            information.
+            The copies we treat as stored are: the BSoftPlats collection inbox (only if you
+            confirm), and your inbox (the confirmation email). Processors who see data in transit
+            are Vercel (the function), Cloudflare (the bot check), and Resend (email delivery).
+            Those companies may process data outside the EEA.
           </p>
 
-          <h3 className="mb-2 text-base font-semibold text-white">
-            “Cookies” – Automatically collected Information
-          </h3>
+          <h3 className="mb-2 text-base font-semibold text-white">Which data goes where</h3>
+          <ul className="mb-6 list-disc space-y-2 pl-5">
+            <li>
+              Name, email, company, role, message, and contact reason: processed in memory on
+              Vercel, encoded in the confirmation link in your inbox, and (if you confirm) written
+              into the collection email.
+            </li>
+            <li>
+              Phone, country, and how you heard about us: same path, when you provided them.
+            </li>
+            <li>Application screening answers: same path, for applications only.</li>
+            <li>
+              Resume: stays in your browser until confirm, then attached to the collection email.
+              It is not put in the confirmation email.
+            </li>
+            <li>
+              Turnstile token and IP: sent to Cloudflare, used for the bot check, not put in either
+              email.
+            </li>
+          </ul>
+
+          <h3 className="mb-2 text-base font-semibold text-white">Cookies and local storage</h3>
           <p className="mb-6">
-            When you view one of our Web sites, we may store some information on your computer in
-            the form of a “Cookie” to automatically recognize you the next time you visit. Cookies
-            allow web applications to respond to you as an individual. The web application can
-            tailor its operations to your needs, likes and dislikes by gathering and remembering
-            information about your preferences. Overall, cookies help us provide you with a better
-            website experience for our users, by enabling us to monitor which pages you find useful
-            and which you do not. You can choose to accept or decline cookies. For more information
-            about our cookies policy please refer to our cookies policy in our website.
+            We do not use analytics cookies on this form to remember your preferences or which pages
+            you like. Cloudflare Turnstile may set storage in your browser to run the bot check.
+            For applications we keep the resume in your browser so you can confirm from the same
+            device. You can clear that by clearing site data.
           </p>
 
-          <h3 className="mb-2 text-base font-semibold text-white">
-            Information Collected During Your E-Mail Communications with Us
-          </h3>
-          <p className="mb-6">
-            During or related to your accessing the services, you may send an e-mail or other
-            electronic communication to us. When you send an e-mail or other electronic
-            communication to us, you are communicating with us electronically and consent to receive
-            reply communications from us electronically. We may retain the content of the e-mail or
-            other electronic communication, your e-mail address or other identifier, and our
-            response in order to better service your needs or for legal and regulatory reasons.
-          </p>
-
-          <h3 className="mb-2 text-base font-semibold text-white">
-            Information Collected During Your Employment
-          </h3>
-          <p className="mb-4">
-            During your employment timeframe, we collect personal information about users, based on
-            the information that is being collected by the company, such as: Full Name; eMail
-            address; Phone number; Experience; Education; Skills and Objectives. Other than that, we
-            collect information based on Survey responses. When you log in the platform and interact
-            with the questionnaire, any information that you post, display, or submit on or through
-            the surveys hosted by us, we also collect and store.
-          </p>
-          <p className="mb-4">
-            Do You Administer the Surveys? Surveys are administered by us. We host the surveys on
-            our services and collect the responses submitted. If you have any questions about a
-            survey you are taking, please contact BSoftPlats at{" "}
-            <a className="underline underline-offset-2 hover:text-white" href="mailto:privacy@bsoftplats.com">
-              privacy@bsoftplats.com
-            </a>{" "}
-            or your organization’s manager who signed you up for this service.
-          </p>
-          <p className="mb-4">
-            Are your survey responses anonymous? Yes. If you respond to a survey, your email address
-            is not automatically associated with the response, nor is it transmitted by us to your
-            employer. However, there are rare circumstances whereby your employer may be able to
-            associate responses with a person. For example, if one or a very small amount of people
-            respond to a survey, your employer may be able to intuit who provided what responses.
-          </p>
-          <p className="mb-4">
-            How do we use the information we collect? We use the information we collect from you in
-            order to provide you with feedback. Furthermore, we may make aggregate, anonymized, or
-            anonymous data available to your employer for organizational effectiveness purposes. In
-            all such instances, we will not disclose any identifiable information about you or your
-            respondents.
+          <h3 className="mb-2 text-base font-semibold text-white">Legal basis</h3>
+          <p className="mb-3">
+            We process the form on the basis of your consent, which you give by ticking the box
+            before submit. You can withdraw consent by not confirming the email, or by emailing us
+            as below. Withdrawal does not undo processing already completed (for example a
+            confirmation email already sitting in your inbox).
           </p>
           <p className="mb-6">
-            Do you sell your responses? We do not sell, trade, or otherwise transfer your personal
-            information or your survey responses, but we may make aggregate, anonymized, or
-            anonymous data available to third parties for research or other purposes. We do not
-            disclose your survey responses to your employer or to third parties.
-          </p>
-
-          <h3 className="mb-2 text-base font-semibold text-white">
-            “Cookies” – Information Placed Automatically on Your Computer
-          </h3>
-          <p className="mb-6">
-            When you view one of our Web sites, we may store some information on your computer in
-            the form of a “Cookie” to automatically recognize you the next time you visit. Cookies
-            allow web applications to respond to you as an individual. The web application can
-            tailor its operations to your needs, likes and dislikes by gathering and remembering
-            information about your preferences. We use traffic log cookies to identify which pages
-            are being used. This helps us analyze data about web page traffic and improve our
-            website in order to tailor it to customer needs. We only use this information for
-            statistical analysis purposes and then the data is removed from the system. Overall,
-            cookies help us provide you with a better website, by enabling us to monitor which pages
-            you find useful and which you do not. A cookie in no way gives us access to your
-            computer or any information about you, other than the data you choose to share with us.
-            You can choose to accept or decline cookies. Most web browsers automatically accept
-            cookies, but you can usually modify your browser setting to decline cookies if you
-            prefer. This may prevent you from taking full advantage of the website.
+            The bot check is necessary so the form is not abused. Confirmation exists so we do not
+            send an inquiry or application until you prove you control the email address.
           </p>
 
           <h3 className="mb-2 text-base font-semibold text-white">Safety of Minors</h3>
           <p className="mb-6">
             Our services are not intended for and may not be used by minors. “Minors” are
             individuals under the age of majority in their place of residence. BSoftPlats does not
-            knowingly collect personal data from minors or allow them to register. If it comes to
-            our attention that we have collected personal data from a minor, we may delete this
-            information without notice. If you have reason to believe that this has occurred, please
-            contact us at{" "}
+            knowingly collect personal data from minors. If you have reason to believe that this has
+            occurred, please contact us at{" "}
             <a className="underline underline-offset-2 hover:text-white" href="mailto:privacy@bsoftplats.com">
               privacy@bsoftplats.com
             </a>
@@ -481,98 +453,45 @@ function PrivacyPolicyModal({ onClose }: { onClose: () => void }) {
           </p>
 
           <h3 className="mb-2 text-base font-semibold text-white">
-            Other Uses or Sharing of Your Information
+            Other sharing
           </h3>
           <p className="mb-3">
-            In addition to those discussed in this privacy policy, we may use and share your
-            information, including personal information, without limitation, in the following
-            manner:
-          </p>
-          <ul className="mb-6 list-disc space-y-2 pl-5">
-            <li>
-              In response to judicial or other governmental subpoenas, warrants and court orders
-              served on us in accordance with their terms, or as otherwise required by applicable
-              law;
-            </li>
-            <li>
-              To comply with legal, regulatory or administrative requirements of governmental
-              authorities;
-            </li>
-            <li>
-              To protect our rights or property, protect our legitimate business interests, to
-              enforce the provisions of our terms or policies, in cases of customer fraud/disputes,
-              and/or to prevent harm to you or others;
-            </li>
-            <li>
-              To protect or defend us, our subsidiaries, affiliates, or parent company and any of
-              their officers, directors, employees, agents, contractors and partners, in connection
-              with any legal action, claim or dispute;
-            </li>
-            <li>As disclosed in other applicable policies, terms of use, or other agreements; or</li>
-            <li>As permitted or required by law or as authorized by you.</li>
-          </ul>
-
-          <h3 className="mb-2 text-base font-semibold text-white">Security and Storage</h3>
-          <p className="mb-4">
-            We are concerned about safeguarding the confidentiality of your information. We adhere
-            to accepted industry security standards that are designed to protect any nonpublic
-            personal information collected by our services against accidental use, access, or
-            disclosure. We provide physical, electronic, and procedural safeguards to protect
-            information we collect, process, and maintain.
-          </p>
-          <p className="mb-6">
-            The technology we use is specifically designed for web servers. All of your personal
-            information resides in a secure database behind a firewall where it cannot be accessed
-            without proper authentication. Information collected by our Services is protected by
-            Secure Socket Layer (“SSL”) technology, a leading security protocol for data transfer on
-            the Internet. Secure Socket Layer (“SSL”) technology encrypts your personal information.
-            Please remember that no method of transmission, or method of electronic storage, is 100%
-            secure. While we strive to use commercially acceptable means to protect your personal
-            information, we cannot guarantee its absolute security. We also do not guarantee the
-            confidentiality or security of electronic transmissions via the Internet due to
-            potentially unsafe computers or links. This could result in data becoming lost or
-            intercepted during transmission. Please use good judgment before deciding to send
-            information via the Internet.
+            Besides the processors above, we may share personal data if the law requires it, or to
+            defend our rights, or if you ask us to.
           </p>
 
-          <h3 className="mb-2 text-base font-semibold text-white">Retention Period</h3>
+          <h3 className="mb-2 text-base font-semibold text-white">Security and storage</h3>
           <p className="mb-6">
-            The Information will be stored either for a period of one year or for as long as needed
-            for business usage. If in the future, we intend to process the Information for a purpose
-            other than that which it was collected, we will provide you with information on that
-            purpose and any other relevant information.
+            Traffic to the form uses HTTPS. We do not store inquiries in a BSoftPlats database. The
+            durable copies are email: yours, and the collection inbox after you confirm. No method
+            of sending or storing email is completely secure.
+          </p>
+
+          <h3 className="mb-2 text-base font-semibold text-white">Retention</h3>
+          <p className="mb-6">
+            The signed confirmation link expires after 5 minutes. If you never confirm, we do not
+            send the collection email. Email, once delivered, lives in mailboxes. We cannot delete
+            the confirmation message from your inbox. The BSoftPlats collection inbox is ordinary
+            email; we do not promise to delete messages from it. Processor logs (Vercel, Cloudflare,
+            Resend) follow those companies’ own retention.
           </p>
 
           <h3 className="mb-2 text-base font-semibold text-white">Data Subjects Rights</h3>
           <p className="mb-4">
-            Under the General Data Protection Regulation (GDPR) and The Data Protection Act 2018
-            (DPA) you have a number of rights with regard to your personal data. You have the right
-            to request from us access to and rectification or erasure of the Information, the right
-            to restrict processing, object to processing as well as in certain circumstances the
-            right to data portability.
+            Under the GDPR you can ask us what personal data we hold about a submission, and you can
+            object or ask us to restrict how we use it going forward. We cannot remove a copy that
+            already sits in your inbox. We also do not promise to delete a copy that already sits in
+            the BSoftPlats collection inbox.
           </p>
           <p className="mb-6">
-            You have the right to lodge a complaint to us if you believe that we have not complied
-            with the requirements of the GDPR or DPA by contacting as specified below.
-          </p>
-
-          <h3 className="mb-2 text-base font-semibold text-white">Stopping Collection of Information</h3>
-          <p className="mb-6">
-            If you would like us to delete information that you submit, please contact us at{" "}
-            <a className="underline underline-offset-2 hover:text-white" href="mailto:privacy@bsoftplats.com">
-              privacy@bsoftplats.com
-            </a>
-            , and we will respond in a reasonable time.
+            You can also complain to a data-protection authority in your country if you think we
+            have not handled your data lawfully.
           </p>
 
           <h3 className="mb-2 text-base font-semibold text-white">Changes to our Privacy Policy</h3>
           <p className="mb-6">
-            We may make changes to our privacy policy from time to time. When we change the privacy
-            policy in a material way, a notice will be placed at our services along with the changed
-            privacy policy. It is your responsibility to review this privacy policy frequently and
-            remain informed about any changes to it, so we encourage you to visit this page often.
-            Your continued use of our services constitutes your acceptance of any amendments to and
-            the most recent versions of this privacy policy.
+            We may change this notice. The version in this form is the one that applies to a
+            submission you make while it is shown.
           </p>
 
           <h3 className="mb-2 text-base font-semibold text-white">For Data Subjects in the EU</h3>
@@ -1109,8 +1028,10 @@ export function ContactFlow({
                         />
                         <span>
                           <label htmlFor="gdpr-agree" className="cursor-pointer">
-                            I have read and agree to BSoftPlats’s Privacy Policy. I consent to BSoftPlats storing and
-                            using my submitted information to respond to my enquiry.
+                            I have read and agree to BSoftPlats’s Privacy Policy. I consent to a
+                            confirmation email being sent to me and, after I confirm, to my inquiry
+                            or application being sent to a BSoftPlats collection inbox, as described
+                            in that policy.
                           </label>{" "}
                           <button
                             type="button"

@@ -74,8 +74,6 @@ const BUSINESS_PARTNERS = [
   "Atalef",
   "Flametree AI",
   "Plumery",
-  "Banking Partner",
-  "GenAI Partner",
 ];
 
 export default function App() {
@@ -349,48 +347,54 @@ export default function App() {
           </div>
         </section>
 
-        <section id="about" className="scroll-mt-[72px] border-t border-white/10 py-32 sm:py-40 lg:py-48">
+        <section id="about" className="scroll-mt-[72px] border-t border-white/10 py-28 sm:py-36 lg:py-44">
           <div className="mx-auto max-w-6xl px-6">
-            <div className="grid gap-12 text-base leading-relaxed text-zinc-300 sm:text-lg lg:grid-cols-2 lg:items-start lg:gap-16">
-              <div>
-                <p className="mb-6 text-xs font-semibold uppercase tracking-[0.18em] text-zinc-500">About</p>
-                <h2 className="mb-10 max-w-xl text-4xl font-semibold tracking-tight text-white sm:mb-12 sm:text-5xl lg:text-6xl">
+            <div className="grid items-start gap-10 lg:grid-cols-2 lg:gap-x-16">
+              <div className="space-y-12">
+                <h2 className="text-5xl font-semibold tracking-tight text-white sm:text-6xl lg:text-6xl lg:leading-[1.1]">
                   When we are done, you should not need us.
                 </h2>
-                <RevealOnce className="space-y-6">
+                <RevealOnce className="text-lg leading-8 text-white">
                   <p>
                     Most engineering vendors are built to stay. You rent capacity, the work happens while you pay, and
                     when the contract ends the knowledge walks out with the people.
                   </p>
-                  <p>
-                    We are built the other way. We go into systems that are slow, expensive, or fragile, fix the cause
-                    instead of the symptom, and hand it over running. What stays behind keeps working without us.
-                  </p>
                 </RevealOnce>
               </div>
-              <RevealOnce className="space-y-6 lg:border-l lg:border-white/10 lg:pl-16" delayMs={90}>
-                <ul className="list-disc space-y-3 pl-5 text-zinc-200 marker:text-zinc-500">
+              <RevealOnce delayMs={90}>
+                <p className="text-lg leading-8 text-white">
+                  We are built the other way. We go into systems that are slow, expensive, or fragile, fix the cause
+                  instead of the symptom, and hand it over running. What stays behind keeps working without us.
+                </p>
+                <ul className="mt-5 list-disc space-y-2 pl-5 text-lg leading-8 text-white marker:text-white">
                   <li>A pipeline your developers run themselves</li>
                   <li>A cost model your finance team can read</li>
                   <li>A recovery procedure someone can execute at 3am</li>
                   <li>An architecture your next five hires understand on day one</li>
                 </ul>
-                <p>
+                <p className="mt-5 text-lg leading-8 text-white">
                   If what you need is capacity, we do that too. It is one of the things we offer, not the reason we
                   exist.
                 </p>
-                <p>
-                  Tell us what is slow, what is expensive, or what keeps breaking. You will get a straight answer on
-                  what we would do, what it takes, and what you own when we are gone.
-                </p>
-                <a
-                  href="#contact"
-                  className="lift-hover inline-flex items-center justify-center rounded-2xl bg-white px-8 py-3 text-sm font-semibold text-black hover:bg-zinc-200"
-                >
-                  Get in contact
-                </a>
               </RevealOnce>
             </div>
+            <div className="mx-auto mt-10 flex max-w-lg items-center gap-5 sm:mt-12" aria-hidden="true">
+              <span className="h-px flex-1 bg-white/30" />
+              <span className="size-1.5 rotate-45 bg-white/70" />
+              <span className="h-px flex-1 bg-white/30" />
+            </div>
+            <RevealOnce className="mt-8 text-center sm:mt-10" delayMs={120}>
+              <p className="text-xl font-medium leading-snug tracking-tight text-white sm:text-2xl lg:text-3xl lg:leading-snug">
+                Tell us what is slow, what is expensive, or what keeps breaking. You will get a straight answer on what
+                we would do, what it takes, and what you own when we are gone.
+              </p>
+              <a
+                href="#contact"
+                className="lift-hover mt-10 inline-flex items-center justify-center rounded-2xl bg-white px-12 py-4 text-base font-semibold text-black hover:bg-zinc-200"
+              >
+                Get in contact
+              </a>
+            </RevealOnce>
           </div>
         </section>
 
@@ -422,18 +426,15 @@ export default function App() {
 
         <section id="services" className="scroll-mt-[72px] border-t border-white/10 py-20 sm:py-28">
           <div className="mx-auto max-w-6xl px-6">
-            <h3 className="mb-6 text-center text-3xl font-semibold tracking-tight text-white sm:text-5xl">
+            <h3 className="mb-10 text-center text-3xl font-semibold tracking-tight text-white sm:text-5xl">
               Our Services
             </h3>
             <RevealOnce>
-            <p className="mb-10 text-center text-sm text-zinc-400">
-              Six lines of work. Click through if you want the detail.
-            </p>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               {SERVICES.map((service) => (
                 <article
                   key={service.slug}
-                  className="lift-hover group flex flex-col border border-white/12 bg-white/[0.03] p-6 transition-colors hover:border-white hover:bg-white sm:p-8"
+                  className="lift-hover group flex flex-col rounded-2xl border border-white/12 bg-white/[0.03] p-6 transition-colors hover:border-white hover:bg-white sm:p-8"
                 >
                   <h4 className="mb-3 text-2xl font-semibold tracking-tight text-white transition-colors group-hover:text-black">
                     {service.title}
