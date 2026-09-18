@@ -1,5 +1,6 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
+import { Analytics } from "@vercel/analytics/react";
 import App from "./App";
 import { StoriesErrorBoundary } from "./lib/stories";
 import { StoriesPage } from "./pages/stories-page";
@@ -269,6 +270,7 @@ function Root() {
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <Root />
+    <Analytics />
   </StrictMode>,
 );
 

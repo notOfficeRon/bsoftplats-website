@@ -395,8 +395,8 @@ function PrivacyPolicyModal({ onClose }: { onClose: () => void }) {
           <p className="mb-6">
             The copies we treat as stored are: the BSoftPlats collection inbox (only if you
             confirm), and your inbox (the confirmation email). Processors who see data in transit
-            are Vercel (the function), Cloudflare (the bot check), and Resend (email delivery).
-            Those companies may process data outside the EEA.
+            are Vercel (the function and Web Analytics), Cloudflare (the bot check), and Resend
+            (email delivery). Those companies may process data outside the EEA.
           </p>
 
           <h3 className="mb-2 text-base font-semibold text-white">Which data goes where</h3>
@@ -422,10 +422,11 @@ function PrivacyPolicyModal({ onClose }: { onClose: () => void }) {
 
           <h3 className="mb-2 text-base font-semibold text-white">Cookies and local storage</h3>
           <p className="mb-6">
-            We do not use analytics cookies on this form to remember your preferences or which pages
-            you like. Cloudflare Turnstile may set storage in your browser to run the bot check.
-            For applications we keep the resume in your browser so you can confirm from the same
-            device. You can clear that by clearing site data.
+            We do not use advertising cookies or a tool that remembers which pages you like. We use
+            Vercel Web Analytics for anonymous traffic (page views, referrers, country). It is meant
+            to work without a tracking cookie. Cloudflare Turnstile may set storage in your browser
+            to run the bot check. For applications we keep the resume in your browser so you can
+            confirm from the same device. You can clear that by clearing site data.
           </p>
 
           <h3 className="mb-2 text-base font-semibold text-white">Legal basis</h3>
